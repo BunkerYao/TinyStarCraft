@@ -1,2 +1,2 @@
 # TinyStarCraft
-A small RTS game based on StarCraft series.
+A small RTS game like StarCraft series.
