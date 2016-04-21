@@ -3,7 +3,7 @@
 #include "Utilities/Exceptions.h"
 
 // The window class name
-const wchar_t WINDOW_CLASS_NAME[] = L"GameWindow";
+const char WINDOW_CLASS_NAME[] = "GameWindow";
 
 // The window style (Non-sizeable)
 const unsigned WINDOW_STYLE = WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX)& ~(WS_SIZEBOX);
@@ -39,15 +39,33 @@ GameWindow::~GameWindow()
     ::DestroyWindow(mhWnd);
 }
 
-bool GameWindow::create(const Rectd& clientRect, const std::wstring& title)
+bool GameWindow::create(const Rectd& clientRect, const std::string& title)
 {
     // Compute actual window rectangle from client rectangle.
     RECT rect;
-    ::SetRect(&rect, clientRect.getLeft(), clientRect.getTop(), clientRect.getRight(), clientRect.getBottom());
+    ::SetRect(
+        &rect,
+        clientRect.getLeft(),
+        clientRect.getTop(),
+        clientRect.getRight(),
+        clientRect.getBottom()
+        );
+
     ::AdjustWindowRect(&rect, WINDOW_STYLE, FALSE);
 
-    mhWnd = ::CreateWindow(WINDOW_CLASS_NAME, title.c_str(), WINDOW_STYLE, rect.left, rect.top, 
-        rect.right - rect.left, rect.bottom - rect.top, NULL, NULL, ::GetModuleHandle(NULL), NULL);
+    mhWnd = ::CreateWindow(
+        WINDOW_CLASS_NAME,
+        title.c_str(),
+        WINDOW_STYLE,
+        rect.left,
+        rect.top, 
+        rect.right - rect.left,
+        rect.bottom - rect.top,
+        NULL,
+        NULL,
+        ::GetModuleHandle(NULL),
+        NULL
+        );
 
     if (mhWnd == NULL)
         return false;

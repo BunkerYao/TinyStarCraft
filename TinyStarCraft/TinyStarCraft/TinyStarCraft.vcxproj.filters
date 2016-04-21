@@ -38,6 +38,7 @@
     <ClInclude Include="Utilities\Exceptions.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="Rendering\RenderSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Precompiled.cpp" />
@@ -47,5 +48,6 @@
     <ClCompile Include="Windows\Main.cpp">
       <Filter>Windows</Filter>
     </ClCompile>
+    <ClCompile Include="Rendering\RenderSystem.cpp" />
   </ItemGroup>
 </Project>

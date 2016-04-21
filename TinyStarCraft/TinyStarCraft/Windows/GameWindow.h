@@ -40,7 +40,7 @@ public:
      *  @return
      *  True if succeeded, false if failed.
      */
-    bool create(const Rectd& clientRect, const std::wstring& title);
+    bool create(const Rectd& clientRect, const std::string& title);
 
     /** Get the handle */
     HWND getHWND() const;

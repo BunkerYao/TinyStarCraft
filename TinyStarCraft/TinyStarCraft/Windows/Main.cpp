@@ -1,6 +1,7 @@
 #include "Precompiled.h"
 
 #include "GameWindow.h"
+#include "Rendering/RenderSystem.h"
 
 using namespace TinyStarCraft;
 
@@ -14,12 +15,20 @@ public:
 
     bool init()
     {
+        // Redirect stdout
+        freopen("Log.txt", "w", stdout);
+
         // Create a window
-        if (mGameWindow.create(Rectd::makeRect(30, 30, 800, 600), L"TinyStarCraft") == false)
+        if (mGameWindow.create(Rectd::makeRect(30, 30, 800, 600), "TinyStarCraft") == false)
             return false;
 
         // Save the application instance as the userdata. So it can be retrieved in the WndProc.
         ::SetWindowLong(mGameWindow.getHWND(), GWLP_USERDATA, (LONG)this);
+
+        // Create render system.
+        RenderSystemConfig renderConfig = { {800, 600}, true };
+        if (!mRenderSystem.init(mGameWindow.getHWND(), renderConfig))
+            return false;
 
         return true;
     }
@@ -39,6 +48,8 @@ public:
             }
 
             // TODO: Frame logic and render
+
+            mRenderSystem.present();
         }
 
         return 0;
@@ -83,6 +94,7 @@ public:
 
 private:
     GameWindow mGameWindow;
+    RenderSystem mRenderSystem;
 };
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
