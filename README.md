@@ -1,2 +1,2 @@
 # TinyStarCraft
-A small RTS game like StarCraft series.
+A tiny clone of StarCraft.
