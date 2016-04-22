@@ -1,9 +1,12 @@
 #pragma once
 
+#include "Asset/Texture.h"
 #include "Utilities/Size2.h"
 
 namespace TinyStarCraft
 {
+
+class Texture;
 
 /**
  *	Render system configuration
@@ -105,6 +108,24 @@ public:
      */
     RenderSystemConfig getConfig() const;
 
+    /**
+     *	Create a texture from file.
+     *
+     *  @param scrFilename
+     *  The image filename to load the file.
+     *
+     *  @param options
+     *  Options to create the texture.
+     *
+     *  @return
+     *  Returns the created texture. Returns null if error happened.
+     *
+     *  @remarks
+     *  The render system will not release the created texture resource when render device is released.
+     *  Textures created with pool set to other than D3DPOOL_MANAGED will be recreated properly.
+     */
+    Texture* createTextureFromFile(const std::string& srcFilename, const Texture::CreationOptions& options);
+
 private:
     /**
      *	Initialize d3d device.
@@ -133,11 +154,31 @@ private:
      */
     bool _onDeviceReset();
 
+    /**
+     *	Create Gbuffers. Each gbuffer's size will be the same as the current backbuffer size
+     *  in present parameters.
+     *
+     *  @return
+     *  Returns true if all gbuffer are created. Otherwise return false.
+     */
+    bool _createGbuffers();
+
+    /**
+     *	Destroy all gbuffers in the gbuffer array.
+     */
+    void _destroyGbuffers();
+
 private:
     IDirect3D9* mD3d;
     IDirect3DDevice9* mD3dDevice;
     D3DPRESENT_PARAMETERS mPresentParams;
     bool mDeviceNeedsReset;
+
+    // Gbuffers array.
+    // 0 - A8R8G8B8 albedo in RGB channels, emissive in alpha channel.
+    // 1 - X8R8G8B8 world space normal
+    // 2 - R16F     world space height map
+    IDirect3DTexture9* mGbuffers[3];
 };
 
 };

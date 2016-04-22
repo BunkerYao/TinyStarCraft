@@ -7,6 +7,7 @@
 #include <exception>
 #include <functional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #define NOMINMAX

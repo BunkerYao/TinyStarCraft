@@ -1,5 +1,6 @@
 #include "Precompiled.h"
 #include "RenderSystem.h"
+#include "Utilities/Assert.h"
 
 namespace TinyStarCraft
 {
@@ -7,12 +8,15 @@ namespace TinyStarCraft
 RenderSystem::RenderSystem()
     : mD3d(NULL),
       mD3dDevice(NULL),
-      mDeviceNeedsReset(false)
+      mDeviceNeedsReset(false),
+      mGbuffers{NULL, NULL, NULL}
 {
 }
 
 RenderSystem::~RenderSystem()
 {
+    _destroyGbuffers();
+
     if (mD3dDevice) {
         ULONG number = mD3dDevice->Release();
         printf("IDirect3DDevice::Release returned with number %d\n", number);
@@ -30,6 +34,9 @@ bool RenderSystem::init(HWND hWnd, const RenderSystemConfig& config)
     if (!_initD3dDevice(hWnd, config))
         return false;
 
+    // Create Gbuffers
+    if (!_createGbuffers())
+        return false;
 
 
     return true;
@@ -195,6 +202,8 @@ bool RenderSystem::_initD3dDevice(HWND hWnd, const RenderSystemConfig& config)
 
 bool RenderSystem::_onDeviceLost()
 {
+    _destroyGbuffers();
+
     // TODO:
 
     return true;
@@ -202,9 +211,83 @@ bool RenderSystem::_onDeviceLost()
 
 bool RenderSystem::_onDeviceReset()
 {
+    if (!_createGbuffers())
+        return false;
+
     // TODO:
 
     return true;
+}
+
+bool RenderSystem::_createGbuffers()
+{
+    D3DFORMAT gbufferFormats[] = { D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, D3DFMT_R16F };
+    HRESULT hr = 0;
+
+    for (int i = 0; i < 3; ++i) {
+        hr = ::D3DXCreateTexture(
+            mD3dDevice,
+            mPresentParams.BackBufferWidth,
+            mPresentParams.BackBufferHeight,
+            1,
+            D3DUSAGE_RENDERTARGET,
+            gbufferFormats[i],
+            D3DPOOL_DEFAULT,
+            &mGbuffers[i]
+            );
+
+        printf("Create Gbuffer%d : D3DXCreateTexture 0x%08x %s.\n", i, hr, ::DXGetErrorString(hr));
+
+        if (FAILED(hr))
+            return false;
+    }
+
+    return true;
+}
+
+void RenderSystem::_destroyGbuffers()
+{
+    for (int i = 0; i < 3; ++i) {
+        if (mGbuffers[i]) {
+            ULONG number = mGbuffers[i]->Release();
+            TINYSC_ASSERT(number == 0, "Gbuffer release unsuccessful.");
+            printf("Release Gbuffer%d : IDirect3DTexture9::Release %d\n", i, number);
+            mGbuffers[i] = NULL;
+        }
+    }
+}
+
+Texture* RenderSystem::createTextureFromFile(const std::string& srcFilename, const Texture::CreationOptions& options)
+{
+    // TODO: Keep a pointer to those textures created without D3DPOOL_MANAGED option.
+    //       So the render system has a chance to recreate them when device is reseted.
+
+    IDirect3DTexture9* texture = NULL;
+
+    HRESULT hr = ::D3DXCreateTextureFromFileEx(
+        mD3dDevice,
+        srcFilename.c_str(),
+        options.size.x,
+        options.size.y,
+        options.mipLevels,
+        options.usage,
+        options.format,
+        options.pool, 
+        D3DX_DEFAULT,
+        D3DX_DEFAULT,
+        0,
+        NULL,
+        NULL,
+        &texture
+        );
+
+    if (FAILED(hr)) {
+        printf("D3DXCreateTextureFromFileEx failed with result 0x%08x %s.\n", hr, ::DXGetErrorString(hr));
+        printf("\tFilename: %s Width:%d Height:%d Format:%d\n", srcFilename.c_str(), options.size.x, options.size.y, options.format);
+        return nullptr;
+    }
+
+    return new Texture(texture);
 }
 
 }

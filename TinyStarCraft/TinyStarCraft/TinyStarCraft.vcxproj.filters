@@ -39,6 +39,9 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\RenderSystem.h" />
+    <ClInclude Include="Asset\Texture.h" />
+    <ClInclude Include="Asset\ResourceManager.h" />
+    <ClInclude Include="Asset\TextureManager.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Precompiled.cpp" />
@@ -49,5 +52,7 @@
       <Filter>Windows</Filter>
     </ClCompile>
     <ClCompile Include="Rendering\RenderSystem.cpp" />
+    <ClCompile Include="Asset\ResourceManager.cpp" />
+    <ClCompile Include="Asset\TextureManager.cpp" />
   </ItemGroup>
 </Project>

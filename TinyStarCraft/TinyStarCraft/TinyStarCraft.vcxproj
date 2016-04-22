@@ -154,8 +154,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Asset\ResourceManager.h" />
     <ClInclude Include="Precompiled.h" />
     <ClInclude Include="Rendering\RenderSystem.h" />
+    <ClInclude Include="Asset\Texture.h" />
+    <ClInclude Include="Asset\TextureManager.h" />
     <ClInclude Include="Utilities\Assert.h" />
     <ClInclude Include="Utilities\Exceptions.h" />
     <ClInclude Include="Utilities\Math.h" />
@@ -166,6 +169,7 @@
     <ClInclude Include="Windows\GameWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Asset\ResourceManager.cpp" />
     <ClCompile Include="Precompiled.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -173,6 +177,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Rendering\RenderSystem.cpp" />
+    <ClCompile Include="Asset\TextureManager.cpp" />
     <ClCompile Include="Windows\GameWindow.cpp" />
     <ClCompile Include="Windows\Main.cpp" />
   </ItemGroup>

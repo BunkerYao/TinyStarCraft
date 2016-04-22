@@ -1,6 +1,7 @@
 #include "Precompiled.h"
 
 #include "GameWindow.h"
+#include "Asset/TextureManager.h"
 #include "Rendering/RenderSystem.h"
 
 using namespace TinyStarCraft;
@@ -9,14 +10,21 @@ class Application
 {
 public:
     Application()
-        : mGameWindow(WndProc)
+        : mGameWindow(WndProc),
+          mTextureManager(nullptr)
     {
+    }
+
+    ~Application()
+    {
+        delete mTextureManager;
     }
 
     bool init()
     {
         // Redirect stdout
-        freopen("Log.txt", "w", stdout);
+        FILE* stream = nullptr;
+        freopen_s(&stream, "Log.log", "w", stdout);
 
         // Create a window
         if (mGameWindow.create(Rectd::makeRect(30, 30, 800, 600), "TinyStarCraft") == false)
@@ -29,6 +37,12 @@ public:
         RenderSystemConfig renderConfig = { {800, 600}, true };
         if (!mRenderSystem.init(mGameWindow.getHWND(), renderConfig))
             return false;
+
+        // Create texture manager.
+        mTextureManager = new TextureManager(&mRenderSystem);
+
+        // Try to load a texture.
+        mTextureManager->createFromFile("Test", "./Resources/marine_diffuse_blood__.dds");
 
         return true;
     }
@@ -95,6 +109,7 @@ public:
 private:
     GameWindow mGameWindow;
     RenderSystem mRenderSystem;
+    TextureManager* mTextureManager;
 };
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
