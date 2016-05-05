@@ -1,12 +1,10 @@
 #pragma once
 
-#include "Asset/Texture.h"
+#include "RenderResources.h"
 #include "Utilities/Size2.h"
 
 namespace TinyStarCraft
 {
-
-class Texture;
 
 /**
  *	Render system configuration
@@ -122,9 +120,25 @@ public:
      *
      *  @remarks
      *  The render system will not release the created texture resource when render device is released.
-     *  Textures created with pool set to other than D3DPOOL_MANAGED will be recreated properly.
+     *  Textures created with pool other than D3DPOOL_MANAGED will be recreated properly after device reset.
      */
     Texture* createTextureFromFile(const std::string& srcFilename, const Texture::CreationOptions& options);
+
+    /**
+     *	Create a mesh.
+     *
+     *  @param options
+     *  The creation options for this mesh.
+     *
+     *  @return
+     *  Returns the created mesh. Returns null if error happened.
+     *
+     *  @remarks
+     *  The render system will not release the created mesh resource when render device is released.
+     *  Meshes created with pool other than D3DPOOL_MANAGED will be recreated properly after device reset.
+     */
+    Mesh* createMesh(const Mesh::CreationOptions& options);
+
 
 private:
     /**

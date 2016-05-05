@@ -39,9 +39,11 @@
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="Rendering\RenderSystem.h" />
-    <ClInclude Include="Asset\Texture.h" />
     <ClInclude Include="Asset\ResourceManager.h" />
     <ClInclude Include="Asset\TextureManager.h" />
+    <ClInclude Include="Rendering\RenderResources.h" />
+    <ClInclude Include="Terrain\Terrain.h" />
+    <ClInclude Include="Utilities\AABB.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Precompiled.cpp" />
@@ -54,5 +56,6 @@
     <ClCompile Include="Rendering\RenderSystem.cpp" />
     <ClCompile Include="Asset\ResourceManager.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
+    <ClCompile Include="Terrain\Terrain.cpp" />
   </ItemGroup>
 </Project>

@@ -156,9 +156,11 @@
   <ItemGroup>
     <ClInclude Include="Asset\ResourceManager.h" />
     <ClInclude Include="Precompiled.h" />
+    <ClInclude Include="Rendering\RenderResources.h" />
     <ClInclude Include="Rendering\RenderSystem.h" />
-    <ClInclude Include="Asset\Texture.h" />
     <ClInclude Include="Asset\TextureManager.h" />
+    <ClInclude Include="Terrain\Terrain.h" />
+    <ClInclude Include="Utilities\AABB.h" />
     <ClInclude Include="Utilities\Assert.h" />
     <ClInclude Include="Utilities\Exceptions.h" />
     <ClInclude Include="Utilities\Math.h" />
@@ -178,6 +180,7 @@
     </ClCompile>
     <ClCompile Include="Rendering\RenderSystem.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
+    <ClCompile Include="Terrain\Terrain.cpp" />
     <ClCompile Include="Windows\GameWindow.cpp" />
     <ClCompile Include="Windows\Main.cpp" />
   </ItemGroup>

@@ -10,7 +10,7 @@ Texture* TextureManager::createFromFile(const std::string& resourceName, const s
 {
     // Check whether the resource name is in use.
     if (getResource(resourceName) != nullptr) {
-        printf("Try to create a texture resource with a resource name \"%s\" already in use.\n", resourceName);
+        printf("Try to create a texture resource with a resource name \"%s\" already in use.\n", resourceName.c_str());
         return nullptr;
     }
 

@@ -290,4 +290,29 @@ Texture* RenderSystem::createTextureFromFile(const std::string& srcFilename, con
     return new Texture(texture);
 }
 
+Mesh* RenderSystem::createMesh(const Mesh::CreationOptions& options)
+{
+    // TODO: Keep a pointer to those meshes created without D3DPOOL_MANAGED option.
+    //       So the render system has a chance to recreate them when device is reseted.
+
+    ID3DXMesh* mesh = NULL;
+
+    HRESULT hr = ::D3DXCreateMesh(
+        options.numFaces,
+        options.numVertices,
+        options.options,
+        options.declaration,
+        mD3dDevice,
+        &mesh
+        );
+
+    if (FAILED(hr)) {
+        printf("D3DXCreateMesh failed with result 0x%08x %s.\n", hr, ::DXGetErrorString(hr));
+        printf("\tFaces:%d Vertices:%d Options:%d\n", options.numFaces, options.numVertices, options.options);
+        return nullptr;
+    }
+
+    return new Mesh(mesh);
+}
+
 }

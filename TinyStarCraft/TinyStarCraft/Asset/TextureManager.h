@@ -1,13 +1,12 @@
 #pragma once
 
-#include "Texture.h"
 #include "Asset/ResourceManager.h"
+#include "Rendering/RenderResources.h"
 
 namespace TinyStarCraft
 {
 
 class RenderSystem;
-class Texture;
 
 /**
  *	The texture manager is responsible for managing all texture resources

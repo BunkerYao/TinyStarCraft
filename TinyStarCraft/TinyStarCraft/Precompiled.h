@@ -2,6 +2,7 @@
 
 #include <strsafe.h>
 
+#include <array>
 #include <cassert>
 #include <cstdio>
 #include <exception>
