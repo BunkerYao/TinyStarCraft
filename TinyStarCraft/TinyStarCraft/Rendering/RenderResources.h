@@ -15,6 +15,8 @@ namespace TinyStarCraft
 template <typename T>
 class D3D9ResourceWrapper
 {
+    friend class RenderSystem;
+
 public:
     /**
      *  Constructor
@@ -61,39 +63,11 @@ private:
 class Texture : public D3D9ResourceWrapper<IDirect3DTexture9*>
 {
 public:
-    /**
-    *	Options to create a texture.
-    */
-    struct CreationOptions
-    {
-        /** Default creation arguments */
-        static const CreationOptions& DEFAULT()
-        {
-            static const CreationOptions defaultArgs(Size2<UINT>::ZERO(), 0, 0, D3DFMT_UNKNOWN, D3DPOOL_MANAGED);
-            return defaultArgs;
-        }
-
-        Size2<UINT> size;
-        UINT mipLevels;
-        DWORD usage;
-        D3DFORMAT format;
-        D3DPOOL pool;
-
-        CreationOptions(const Size2<UINT>& size, UINT mipLevels, DWORD usage, D3DFORMAT format, D3DPOOL pool)
-            : size(size), mipLevels(mipLevels), usage(usage), format(format), pool(pool)
-        {}
-    };
-
-public:
-    /**
-     *	Wrap an IDirect3DTexture object
-     */
     explicit Texture(IDirect3DTexture9* texture)
         : D3D9ResourceWrapper<IDirect3DTexture9*>(texture)
     {
         TINYSC_ASSERT(texture, "Texture is null.");
     }
-    
 };
 
 
@@ -103,27 +77,11 @@ public:
 class Mesh : public D3D9ResourceWrapper<ID3DXMesh*>
 {
 public:
-    /**
-     *	Options to create a mesh.
-     */
-    struct CreationOptions
-    {
-        DWORD numFaces;
-        DWORD numVertices;
-        DWORD options;
-        const D3DVERTEXELEMENT9* declaration;
-
-        CreationOptions(DWORD numFaces, DWORD numVertices, DWORD options, const D3DVERTEXELEMENT9* declaration)
-            : numFaces(numFaces), numVertices(numVertices), options(options), declaration(declaration)
-        {
-        }
-    };
-
-public:
     explicit Mesh(ID3DXMesh* mesh)
         : D3D9ResourceWrapper<ID3DXMesh*>(mesh)
-    {}
-    
+    {
+        TINYSC_ASSERT(mesh, "Mesh is null.");
+    }
 };
 
 };

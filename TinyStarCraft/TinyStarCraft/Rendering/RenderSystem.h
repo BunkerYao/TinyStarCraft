@@ -107,37 +107,75 @@ public:
     RenderSystemConfig getConfig() const;
 
     /**
-     *	Create a texture from file.
+     *	Create a texture.
      *
-     *  @param scrFilename
-     *  The image filename to load the file.
+     *  @param size
+     *  Texture size.
      *
-     *  @param options
-     *  Options to create the texture.
+     *  @param mipLevels
+     *  The number of mipmap levels.
      *
-     *  @return
-     *  Returns the created texture. Returns null if error happened.
+     *  @param format
+     *  Format of the texture.
+     *
+     *  @param isRenderTarget
+     *  Whether the texture could be used as a render target or not.
      *
      *  @remarks
-     *  The render system will not release the created texture resource when render device is released.
-     *  Textures created with pool other than D3DPOOL_MANAGED will be recreated properly after device reset.
+     *  The render system will destroy the created texture resource when render device is destroyed.
      */
-    Texture* createTextureFromFile(const std::string& srcFilename, const Texture::CreationOptions& options);
+    Texture* createTexture(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget);
+
+    /**
+     *	Create a texture from file.
+     *
+     *  @param srcFilename
+     *  The file name of the image file to load.
+     *
+     *  @param size
+     *  Prefered texture size.
+     *  
+     *  @param mipLevels
+     *  The number of mipmap levels.
+     *
+     *  @param format
+     *  Format of the texture.
+     *  
+     *  @param isRenderTarget
+     *  Whether the texture could be used as a render target or not.
+     *
+     *  @remarks
+     *  The render system will destroy the created texture resource when render device is destroyed.
+     */
+    Texture* createTextureFromFile(const std::string& srcFilename, const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format,
+        bool isRenderTarget);
+
+    /**
+     *	Destroy a texture created by this render system.
+     */
+    void destroyTexture(Texture* texture);
 
     /**
      *	Create a mesh.
      *
-     *  @param options
-     *  The creation options for this mesh.
+     *  @param numVertices
+     *  The number of vertices in the mesh.
      *
-     *  @return
-     *  Returns the created mesh. Returns null if error happened.
+     *  @param numFaces
+     *  The number of faces in the mesh.
+     *
+     *  @param declaration
+     *  Vertex declaration.
      *
      *  @remarks
-     *  The render system will not release the created mesh resource when render device is released.
-     *  Meshes created with pool other than D3DPOOL_MANAGED will be recreated properly after device reset.
+     *  The render system will destroy the created mesh resource when render device is released.
      */
-    Mesh* createMesh(const Mesh::CreationOptions& options);
+    Mesh* createMesh(DWORD numVertices, DWORD numFaces, const D3DVERTEXELEMENT9* declaration);
+
+    /**
+     *	Destroy a mesh created by this render system.
+     */
+    void destroyMesh(Mesh* mesh);
 
 
 private:
@@ -169,6 +207,28 @@ private:
     bool _onDeviceReset();
 
     /**
+     *	Release render targets.
+     *  This should be called before device is about to reset.
+     */
+    void _releaseRenderTargets();
+
+    /**
+     *	Release render targets.
+     *  This should be called after device is reseted.
+     */
+    bool _recreateRenderTargets();
+
+    /** Create a texture. */
+    IDirect3DTexture9* _createTextureImpl(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget);
+
+    /** Create a texture from file. */
+    IDirect3DTexture9* _createTextureFromFileImpl(const std::string& srcFilename, const Size2<UINT>& size, UINT mipLevels, 
+        D3DFORMAT format, bool isRenderTarget);
+
+    /** Create a mesh. */
+    ID3DXMesh* _createMeshImpl(DWORD numVertices, DWORD numFaces, const D3DVERTEXELEMENT9* declaration);
+
+    /**
      *	Create Gbuffers. Each gbuffer's size will be the same as the current backbuffer size
      *  in present parameters.
      *
@@ -193,6 +253,27 @@ private:
     // 1 - X8R8G8B8 world space normal
     // 2 - R16F     world space height map
     IDirect3DTexture9* mGbuffers[3];
+
+    struct TextureCreationDesc
+    {
+        Size2<UINT> size;
+        UINT mipLevels;
+        D3DFORMAT format;
+        bool isRenderTarget;
+        std::string srcFilename; // Should be empty if the texture is not created from file.
+
+        TextureCreationDesc(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget, 
+            const std::string& srcFilename)
+            : size(size), mipLevels(mipLevels), format(format), isRenderTarget(isRenderTarget), srcFilename(srcFilename)
+        {}
+    };
+
+    // Textures created by this render system.
+    // Since the render targets should be recreated when device is reset, So save a texture description
+    // for each texture to keep its creation settings.
+    std::list<std::pair<Texture*, TextureCreationDesc>> mTextures;
+    // Meshes created by this render system.
+    std::list<Mesh*> mMeshes;
 };
 
 };

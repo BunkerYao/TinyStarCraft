@@ -5,8 +5,8 @@
 namespace TinyStarCraft
 {
 
-Texture* TextureManager::createFromFile(const std::string& resourceName, const std::string& fileName, 
-    const Texture::CreationOptions& options /*= Texture::CreationOptions::DEFAULT()*/)
+Texture* TextureManager::createFromFile(const std::string& resourceName, const std::string& fileName, const Size2<UINT>& size,
+    UINT mipLevels, D3DFORMAT format, bool isRenderTarget)
 {
     // Check whether the resource name is in use.
     if (getResource(resourceName) != nullptr) {
@@ -14,15 +14,14 @@ Texture* TextureManager::createFromFile(const std::string& resourceName, const s
         return nullptr;
     }
 
-    // Create the texture use default settings.
-    Texture* texture = mRenderSystem->createTextureFromFile(fileName, options);
-
+    // Create the texture.
+    Texture* texture = mRenderSystem->createTextureFromFile(fileName, size, mipLevels, format, isRenderTarget);
     if (texture == nullptr) {
         return nullptr;
     }
 
     // Wrap the texture and add to the resource manager.
-    TextureResourceContainer* container = new TextureResourceContainer(resourceName, texture);
+    TextureResourceContainer* container = new TextureResourceContainer(resourceName, texture, mRenderSystem);
     addResource(container);
 
     return texture;
@@ -36,6 +35,11 @@ Texture* TextureManager::getTexture(const std::string& name) const
         return container->getTexture();
     else
         return nullptr;
+}
+
+TextureManager::TextureResourceContainer::~TextureResourceContainer()
+{
+    mRenderSystem->destroyTexture(mTexture);
 }
 
 }

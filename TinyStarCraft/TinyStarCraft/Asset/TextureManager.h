@@ -19,19 +19,18 @@ private:
     class TextureResourceContainer : public Resource
     {
     public:
-        explicit TextureResourceContainer(const std::string& name, Texture* texture)
+        explicit TextureResourceContainer(const std::string& name, Texture* texture, RenderSystem* renderSystem)
             : Resource(name),
-              mTexture(texture)
+              mTexture(texture),
+              mRenderSystem(renderSystem)
         {}
 
-        ~TextureResourceContainer()
-        {
-            delete mTexture;
-        }
+        ~TextureResourceContainer();
 
         Texture* getTexture() const { return mTexture; }
     private:
         Texture* mTexture;
+        RenderSystem* mRenderSystem;
     };
 
 public:
@@ -43,20 +42,23 @@ public:
     /**
      *	Create a texture from file.
      *
-     *  @param resourceName
-     *  A unique name for the new texture resource.
+     *  @param srcFilename
+     *  The file name of the image file to load.
      *
-     *  @param filename
-     *  The image file name.
+     *  @param size
+     *  Prefered texture size.
      *
-     *  @param options
-     *  Options to create the texture.
+     *  @param mipLevels
+     *  The number of mipmap levels.
      *
-     *  @return
-     *  Returns the created texture object. Return null if error happened.
+     *  @param format
+     *  Format of the texture.
+     *
+     *  @param isRenderTarget
+     *  Whether the texture could be used as a render target or not.
      */
-    Texture* createFromFile(const std::string& resourceName, const std::string& fileName, 
-        const Texture::CreationOptions& options = Texture::CreationOptions::DEFAULT());
+    Texture* createFromFile(const std::string& resourceName, const std::string& fileName, const Size2<UINT>& size = Size2<UINT>::ZERO(),
+        UINT mipLevels = D3DX_DEFAULT, D3DFORMAT format = D3DFMT_UNKNOWN, bool isRenderTarget = false);
 
     /**
      *	Get the Texture by resource name.
