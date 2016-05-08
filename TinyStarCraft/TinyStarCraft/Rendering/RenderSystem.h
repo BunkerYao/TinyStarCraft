@@ -1,6 +1,6 @@
 #pragma once
 
-#include "RenderResources.h"
+#include "Texture.h"
 #include "Utilities/Size2.h"
 
 namespace TinyStarCraft
@@ -107,6 +107,22 @@ public:
     RenderSystemConfig getConfig() const;
 
     /**
+     *	Set a render target.
+     *
+     *  @return
+     *  True if succeeded, otherwise false.
+     */
+    bool setRenderTarget(DWORD index, Texture* renderTarget);
+
+    /**
+     *	Reset the 0th render targets to the original render target.
+     *
+     *  @return
+     *  True if succeeded, otherwise false.
+     */
+    bool resetRenderTarget();
+
+    /**
      *	Create a texture.
      *
      *  @param size
@@ -170,13 +186,31 @@ public:
      *  @remarks
      *  The render system will destroy the created mesh resource when render device is released.
      */
-    Mesh* createMesh(DWORD numVertices, DWORD numFaces, const D3DVERTEXELEMENT9* declaration);
+    ID3DXMesh* createMesh(DWORD numVertices, DWORD numFaces, const D3DVERTEXELEMENT9* declaration);
 
     /**
      *	Destroy a mesh created by this render system.
      */
-    void destroyMesh(Mesh* mesh);
+    void destroyMesh(ID3DXMesh* mesh);
 
+    /**
+     *	Create an effect from file.
+     *
+     *  @param srcFilename
+     *  File name of the effect source file.
+     *
+     *  @param flags
+     *  Creation flags.
+     *  
+     *  @return
+     *  Return NULL if failed.
+     */
+    ID3DXEffect* createEffectFromFile(const std::string& srcFilename, DWORD flags);
+
+    /**
+     *	Destroy an effect created by this render system.
+     */
+    void destroyEffect(ID3DXEffect* effect);
 
 private:
     /**
@@ -218,6 +252,10 @@ private:
      */
     bool _recreateRenderTargets();
 
+    void _handleEffectsOnDeviceLost();
+
+    void _handleEffectsOnDeviceReset();
+
     /** Create a texture. */
     IDirect3DTexture9* _createTextureImpl(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget);
 
@@ -228,25 +266,17 @@ private:
     /** Create a mesh. */
     ID3DXMesh* _createMeshImpl(DWORD numVertices, DWORD numFaces, const D3DVERTEXELEMENT9* declaration);
 
-    /**
-     *	Create Gbuffers. Each gbuffer's size will be the same as the current backbuffer size
-     *  in present parameters.
-     *
-     *  @return
-     *  Returns true if all gbuffer are created. Otherwise return false.
-     */
-    bool _createGbuffers();
-
-    /**
-     *	Destroy all gbuffers in the gbuffer array.
-     */
-    void _destroyGbuffers();
+    /** Create effect from file. */
+    ID3DXEffect* _createEffectFromFileImpl(const std::string& srcFilename, DWORD flags);
 
 private:
     IDirect3D9* mD3d;
     IDirect3DDevice9* mD3dDevice;
     D3DPRESENT_PARAMETERS mPresentParams;
     bool mDeviceNeedsReset;
+
+    // This is the render target automatically created by the device.
+    IDirect3DSurface9* mOriginalRenderTarget;
 
     // Gbuffers array.
     // 0 - A8R8G8B8 albedo in RGB channels, emissive in alpha channel.
@@ -273,7 +303,9 @@ private:
     // for each texture to keep its creation settings.
     std::list<std::pair<Texture*, TextureCreationDesc>> mTextures;
     // Meshes created by this render system.
-    std::list<Mesh*> mMeshes;
+    std::list<ID3DXMesh*> mMeshes;
+    // Effects created by this render system.
+    std::list<ID3DXEffect*> mEffects;
 };
 
 };

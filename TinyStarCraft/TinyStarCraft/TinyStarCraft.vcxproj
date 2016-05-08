@@ -155,14 +155,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Asset\ResourceManager.h" />
+    <ClInclude Include="Asset\EffectManager.h" />
+    <ClInclude Include="Asset\MaterialManager.h" />
+    <ClInclude Include="Rendering\Camera.h" />
     <ClInclude Include="Precompiled.h" />
-    <ClInclude Include="Rendering\RenderResources.h" />
+    <ClInclude Include="Rendering\Material.h" />
+    <ClInclude Include="Rendering\Texture.h" />
     <ClInclude Include="Rendering\RenderSystem.h" />
     <ClInclude Include="Asset\TextureManager.h" />
+    <ClInclude Include="Terrain\TerrainMaterial.h" />
     <ClInclude Include="Terrain\Terrain.h" />
     <ClInclude Include="Utilities\AABB.h" />
     <ClInclude Include="Utilities\Assert.h" />
     <ClInclude Include="Utilities\Exceptions.h" />
+    <ClInclude Include="Utilities\Logging.h" />
     <ClInclude Include="Utilities\Math.h" />
     <ClInclude Include="Utilities\Point2.h" />
     <ClInclude Include="Utilities\Rect2.h" />
@@ -172,6 +178,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Asset\ResourceManager.cpp" />
+    <ClCompile Include="Asset\EffectManager.cpp" />
+    <ClCompile Include="Asset\MaterialManager.cpp" />
+    <ClCompile Include="Rendering\Camera.cpp" />
     <ClCompile Include="Precompiled.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
@@ -181,8 +190,18 @@
     <ClCompile Include="Rendering\RenderSystem.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
     <ClCompile Include="Terrain\Terrain.cpp" />
+    <ClCompile Include="Utilities\Logging.cpp" />
     <ClCompile Include="Windows\GameWindow.cpp" />
     <ClCompile Include="Windows\Main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Effects\Terrain.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <FileType>Document</FileType>
+    </None>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

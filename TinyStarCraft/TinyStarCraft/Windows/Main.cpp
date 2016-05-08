@@ -1,8 +1,12 @@
 #include "Precompiled.h"
 
 #include "GameWindow.h"
+#include "Asset/MaterialManager.h"
 #include "Asset/TextureManager.h"
+#include "Rendering/Camera.h"
 #include "Rendering/RenderSystem.h"
+#include "Terrain/Terrain.h"
+#include "Terrain/TerrainMaterial.h"
 
 using namespace TinyStarCraft;
 
@@ -11,13 +15,17 @@ class Application
 public:
     Application()
         : mGameWindow(WndProc),
-          mTextureManager(nullptr)
+          mTextureManager(nullptr),
+          mCamera(nullptr)
     {
     }
 
     ~Application()
     {
+        delete mMaterialManager;
         delete mTextureManager;
+        delete mTerrain;
+        delete mCamera;
     }
 
     bool init()
@@ -38,12 +46,32 @@ public:
         if (!mRenderSystem.init(mGameWindow.getHWND(), renderConfig))
             return false;
 
+        // Create effect manager.
+        mMaterialManager = new MaterialManager(&mRenderSystem);
+
         // Create texture manager.
         mTextureManager = new TextureManager(&mRenderSystem);
 
         // Try to load a texture.
-        mTextureManager->createFromFile("Test", "./Resources/marine_diffuse_blood__.dds");
+        mTextureManager->createTextureFromFile("Test", "./Resources/marine_diffuse_blood__.dds");
 
+        // Create an terrain material.
+        mMaterialManager->createMaterial("terrain", "terrain");
+
+        // Create a camera
+        mCamera = new Camera(Size2f(800.0f, 600.0f), D3DXVECTOR3(600.0f, 400.0f, 600.0f));
+
+        // Create a terrain
+        Size2d terrainDimension(16, 16);
+        std::vector<int> cellsData(terrainDimension.x * terrainDimension.y, 0);
+        for (int i = 0; i < 15; ++i)
+            cellsData[i] = i;
+        std::vector<int> altitudeLevelData(terrainDimension.x * terrainDimension.y, 0);
+        altitudeLevelData[0] = 0;
+        TerrainMaterial* terrainMaterial = static_cast<TerrainMaterial*>(mMaterialManager->getMaterial("terrain"));
+        mTerrain = new Terrain(&mRenderSystem);
+        mTerrain->create(terrainDimension, cellsData, altitudeLevelData, terrainMaterial);
+        
         return true;
     }
 
@@ -62,6 +90,9 @@ public:
             }
 
             // TODO: Frame logic and render
+            mRenderSystem.beginScene();
+            mTerrain->draw(mCamera);
+            mRenderSystem.endScene();
 
             mRenderSystem.present();
         }
@@ -109,7 +140,10 @@ public:
 private:
     GameWindow mGameWindow;
     RenderSystem mRenderSystem;
+    MaterialManager* mMaterialManager;
     TextureManager* mTextureManager;
+    Terrain* mTerrain;
+    Camera* mCamera;
 };
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,

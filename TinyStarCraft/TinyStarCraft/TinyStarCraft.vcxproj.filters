@@ -41,9 +41,15 @@
     <ClInclude Include="Rendering\RenderSystem.h" />
     <ClInclude Include="Asset\ResourceManager.h" />
     <ClInclude Include="Asset\TextureManager.h" />
-    <ClInclude Include="Rendering\RenderResources.h" />
     <ClInclude Include="Terrain\Terrain.h" />
     <ClInclude Include="Utilities\AABB.h" />
+    <ClInclude Include="Rendering\Texture.h" />
+    <ClInclude Include="Terrain\TerrainMaterial.h" />
+    <ClInclude Include="Rendering\Material.h" />
+    <ClInclude Include="Asset\EffectManager.h" />
+    <ClInclude Include="Asset\MaterialManager.h" />
+    <ClInclude Include="Utilities\Logging.h" />
+    <ClInclude Include="Rendering\Camera.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Precompiled.cpp" />
@@ -57,5 +63,12 @@
     <ClCompile Include="Asset\ResourceManager.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
     <ClCompile Include="Terrain\Terrain.cpp" />
+    <ClCompile Include="Asset\EffectManager.cpp" />
+    <ClCompile Include="Asset\MaterialManager.cpp" />
+    <ClCompile Include="Utilities\Logging.cpp" />
+    <ClCompile Include="Rendering\Camera.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Effects\Terrain.hlsl" />
   </ItemGroup>
 </Project>

@@ -1,16 +1,18 @@
 #include "Precompiled.h"
 #include "TextureManager.h"
 #include "Rendering/RenderSystem.h"
+#include "Utilities/Logging.h"
 
 namespace TinyStarCraft
 {
 
-Texture* TextureManager::createFromFile(const std::string& resourceName, const std::string& fileName, const Size2<UINT>& size,
-    UINT mipLevels, D3DFORMAT format, bool isRenderTarget)
+Texture* TextureManager::createTextureFromFile(const std::string& resourceName, const std::string& fileName,
+    const Size2<UINT>& size /*= Size2<UINT>::ZERO()*/, UINT mipLevels /*= D3DX_DEFAULT*/, D3DFORMAT format /*= D3DFMT_UNKNOWN*/,
+    bool isRenderTarget /*= false*/)
 {
     // Check whether the resource name is in use.
     if (getResource(resourceName) != nullptr) {
-        printf("Try to create a texture resource with a resource name \"%s\" already in use.\n", resourceName.c_str());
+        TINYSC_LOGLINE_ERR("Texture name \"%s\" is already in use.\n", resourceName.c_str());
         return nullptr;
     }
 
@@ -31,9 +33,9 @@ Texture* TextureManager::getTexture(const std::string& name) const
 {
     TextureResourceContainer* container = static_cast<TextureResourceContainer*>(getResource(name));
 
-    if (container)
+    if (container) 
         return container->getTexture();
-    else
+    else 
         return nullptr;
 }
 

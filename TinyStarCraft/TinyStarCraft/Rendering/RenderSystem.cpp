@@ -1,6 +1,7 @@
 #include "Precompiled.h"
 #include "RenderSystem.h"
 #include "Utilities/Assert.h"
+#include "Utilities/Logging.h"
 
 namespace TinyStarCraft
 {
@@ -15,6 +16,11 @@ RenderSystem::RenderSystem()
 
 RenderSystem::~RenderSystem()
 {
+    // Release the original render target.
+    ULONG releaseNumber = mOriginalRenderTarget->Release();
+    if (releaseNumber > 0)
+        TINYSC_LOGLINE_INFO("Release original render target unsuccessfully %d", releaseNumber);
+
     // Destroy all textures.
     if (!mTextures.empty()) {
         for (auto& it : mTextures)
@@ -26,36 +32,26 @@ RenderSystem::~RenderSystem()
     // Destroy all meshes.
     if (!mMeshes.empty()) {
         for (auto& it : mMeshes)
-            delete it;
+            it->Release();
 
         mMeshes.clear();
     }
 
-    _destroyGbuffers();
-
     if (mD3dDevice) {
-        ULONG number = mD3dDevice->Release();
-        printf("IDirect3DDevice::Release returned with number %d\n", number);
+        releaseNumber = mD3dDevice->Release();
+        TINYSC_LOGLINE_INFO("IDirect3DDevice::Release %d", releaseNumber);
     }
 
     if (mD3d) {
-        ULONG number = mD3d->Release();
-        printf("IDirect3D9::Release returned with number %d\n", number);
+        releaseNumber = mD3d->Release();
+        TINYSC_LOGLINE_INFO("IDirect3D9::Release %d", releaseNumber);
     }
 }
 
 bool RenderSystem::init(HWND hWnd, const RenderSystemConfig& config)
 {
     // Initialize the d3d device.
-    if (!_initD3dDevice(hWnd, config))
-        return false;
-
-    // Create Gbuffers
-    if (!_createGbuffers())
-        return false;
-
-
-    return true;
+    return _initD3dDevice(hWnd, config);
 }
 
 bool RenderSystem::beginScene()
@@ -64,7 +60,7 @@ bool RenderSystem::beginScene()
     HRESULT hr = mD3dDevice->BeginScene();
 
     if (FAILED(hr)) {
-        printf("IDirect3DDevice::BeginScene failed with result 0x%08x %s\n", hr, ::DXGetErrorString(hr));
+        TINYSC_LOGLINE_ERR("IDirect3DDevice::BeginScene failed 0x%08x %s", hr, ::DXGetErrorString(hr));
         return false;
     }
 
@@ -77,7 +73,7 @@ bool RenderSystem::endScene()
     HRESULT hr = mD3dDevice->EndScene();
 
     if (FAILED(hr)) {
-        printf("IDirect3DDevice::EndScene failed with result 0x%08x %s\n", hr, ::DXGetErrorString(hr));
+        TINYSC_LOGLINE_ERR("IDirect3DDevice::EndScene failed 0x%08x %s", hr, ::DXGetErrorString(hr));
         return false;
     }
 
@@ -92,27 +88,31 @@ int RenderSystem::present()
     // try to reset.
     if (mDeviceNeedsReset) {
         hr = mD3dDevice->TestCooperativeLevel();
+        TINYSC_LOGLINE_ERR("IDirect3DDevice::TestCooperativeLevel 0x%08x %s", hr, ::DXGetErrorString(hr));
 
         if (hr == D3DERR_DEVICENOTRESET) {
             // The device can be reset now.
             // Release all device-dependent resources first.
-            if (!_onDeviceLost())
-                return PRESENTERR_ERROR;
-
-            // Reset the device with the current present parameters.
-            hr = mD3dDevice->Reset(&mPresentParams);
-
-            if (FAILED(hr)) {
-                // Reset still failed.
-                printf("IDirect3DDevice::Reset failed with result 0x%08x %s\n", hr, ::DXGetErrorString(hr));
+            if (!_onDeviceLost()) {
+                TINYSC_LOGLINE_ERR("Present failed because error occured when handling device lost.");
                 return PRESENTERR_ERROR;
             }
 
-            printf("Device reset.\n");
+            // Reset the device with the current present parameters.
+            hr = mD3dDevice->Reset(&mPresentParams);
+            TINYSC_LOGLINE_INFO("IDirect3DDevice::Reset 0x%08x %s", hr, ::DXGetErrorString(hr));
+
+            if (FAILED(hr)) {
+                // Reset still failed.
+                TINYSC_LOGLINE_ERR("Present failed because device reset failed.");
+                return PRESENTERR_ERROR;
+            }
 
             // Device has been reset, recreate device-depent resources.
-            if (!_onDeviceReset())
+            if (!_onDeviceReset()) {
+                TINYSC_LOGLINE_ERR("Present failed because error occured when handling device reset.");
                 return PRESENTERR_ERROR;
+            }
 
             mDeviceNeedsReset = false;
         }
@@ -122,7 +122,7 @@ int RenderSystem::present()
         }
         else {
             // Other error happened.
-            printf("IDirect3DDevice::TestCooperativeLevel returned with result 0x%08x %s\n", hr, ::DXGetErrorString(hr));
+            TINYSC_LOGLINE_ERR("Present failed.");
             return PRESENTERR_ERROR;
         }
     }
@@ -130,18 +130,17 @@ int RenderSystem::present()
     hr = mD3dDevice->Present(NULL, NULL, NULL, NULL);
 
     if (FAILED(hr)) {
+        TINYSC_LOGLINE_INFO("IDirect3DDevice::Present failed 0x%08x %s", hr, ::DXGetErrorString(hr));
+
         if (D3DERR_DEVICELOST == hr) {
             // The device is lost
-            printf("Device lost.\n");
+            TINYSC_LOGLINE_INFO("Detect device lost.");
 
             mDeviceNeedsReset = true;
-
-            if (!_onDeviceLost())
-                return PRESENTERR_ERROR;    
         }
         else {
-            // Other error happens.
-            printf("IDirect3DDevice::Present returned with result 0x%08x %s\n", hr, ::DXGetErrorString(hr));
+            // Other error happened.
+            TINYSC_LOGLINE_ERR("Present failed.");
             return PRESENTERR_ERROR;
         }
     }
@@ -169,6 +168,34 @@ RenderSystemConfig RenderSystem::getConfig() const
     return config;
 }
 
+bool RenderSystem::setRenderTarget(DWORD index, Texture* renderTarget)
+{
+    HRESULT hr = 0;
+    if (renderTarget) {
+        IDirect3DSurface9* surface = NULL;
+        renderTarget->mD3dTexture->GetSurfaceLevel(0, &surface);
+        hr = mD3dDevice->SetRenderTarget(index, surface);
+        surface->Release();
+    }
+    else {
+        hr = mD3dDevice->SetRenderTarget(index, NULL);
+    }
+
+    if (FAILED(hr)) 
+        TINYSC_LOGLINE_ERR("ID3DDevice9::SetRenderTarget failed 0x%08x %s", hr, ::DXGetErrorString(hr));
+    
+    return SUCCEEDED(hr);
+}
+
+bool RenderSystem::resetRenderTarget()
+{
+    HRESULT hr = mD3dDevice->SetRenderTarget(0, mOriginalRenderTarget);
+    if (FAILED(hr)) 
+        TINYSC_LOGLINE_ERR("ID3DDevice9::SetRenderTarget failed 0x%08x %s", hr, ::DXGetErrorString(hr));
+
+    return SUCCEEDED(hr);
+}
+
 Texture* RenderSystem::createTexture(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget)
 {
     IDirect3DTexture9* texture = _createTextureImpl(size, mipLevels, format, isRenderTarget);
@@ -184,15 +211,15 @@ Texture* RenderSystem::createTexture(const Size2<UINT>& size, UINT mipLevels, D3
 
 bool RenderSystem::_initD3dDevice(HWND hWnd, const RenderSystemConfig& config)
 {
+    TINYSC_LOGLINE_INFO("RenderSystemConfig: BackbufferSize(%d*%d), VSync(%d)", config.backbufferSize.x, config.backbufferSize.y,
+        config.isVSyncEnabled);
+
     // Create D3D object
     mD3d = ::Direct3DCreate9(D3D_SDK_VERSION);
-
+    TINYSC_LOGLINE_INFO("::Direct3DCreate9 %p", (void*)mD3d);
     if (!mD3d) {
-        printf("Direct3DCreate9 failed.\n");
+        TINYSC_LOGLINE_ERR("Failed to create IDirect3D9 interface.");
         return false;
-    }
-    else {
-        printf("Direct3DCreate9 succeeded.\n");
     }
 
     // Populate the present parameters struct.
@@ -220,39 +247,65 @@ bool RenderSystem::_initD3dDevice(HWND hWnd, const RenderSystemConfig& config)
     // Create the device.
     HRESULT hr = 0;
     hr = mD3d->CreateDevice(0, D3DDEVTYPE_HAL, hWnd, D3DCREATE_HARDWARE_VERTEXPROCESSING, &mPresentParams, &mD3dDevice);
-
-    printf("IDirect3D9::CreateDevice 0x%08x %s\n", hr, ::DXGetErrorString(hr));
-
-    if (FAILED(hr)) 
+    TINYSC_LOGLINE_INFO("IDirect3D9::CreateDevice 0x%08x %s", hr, ::DXGetErrorString(hr));
+    if (FAILED(hr)) {
+        TINYSC_LOGLINE_ERR("Failed to create device.");
         return false;
+    }
+
+    // Get the original render target.
+    hr = mD3dDevice->GetRenderTarget(0, &mOriginalRenderTarget);
+    if (FAILED(hr)) {
+        TINYSC_LOGLINE_ERR("Failed to get the original render target.");
+        return false;
+    }
 
     return true;
 }
 
 bool RenderSystem::_onDeviceLost()
 {
+    // Release the original render target.
+    ULONG releaseNumber = mOriginalRenderTarget->Release();
+    if (releaseNumber > 0) {
+        TINYSC_LOGLINE_ERR("Release the original render target unsuccessfully %ld.", releaseNumber);
+        return false;
+    }
+
+    // Release all textures created with render target flag set to true.
     _releaseRenderTargets();
 
-    // TODO:
+    _handleEffectsOnDeviceLost();
 
     return true;
 }
 
 bool RenderSystem::_onDeviceReset()
 {
+    // Obtain the original render target.
+    HRESULT hr = mD3dDevice->GetRenderTarget(0, &mOriginalRenderTarget);
+    if (FAILED(hr)) {
+        TINYSC_LOGLINE_ERR("Failed to get the original render target.");
+        return false;
+    }
+
+    // Recreate all textures created with render target flag set to true.
     if (!_recreateRenderTargets())
         return false;
 
-    // TODO:
+    _handleEffectsOnDeviceReset();
 
     return true;
 }
 
 void RenderSystem::_releaseRenderTargets()
 {
+    ULONG releaseNumber = 0;
     for (auto& it : mTextures) {
         if (it.second.isRenderTarget) {
-            it.first->get()->Release();
+            releaseNumber = it.first->mD3dTexture->Release();
+            if (releaseNumber > 0) 
+                TINYSC_LOGLINE_ERR("Render target %p released unsuccessfully %d.", (void*)it.first->mD3dTexture, releaseNumber);
         }
     }
 }
@@ -266,23 +319,41 @@ bool RenderSystem::_recreateRenderTargets()
             UINT mipLevels = it.second.mipLevels;
             D3DFORMAT format = it.second.format;
 
-            if (it.second.srcFilename == "")
+            if (it.second.srcFilename == "") {
                 // The render target is not created from file.
+                TINYSC_LOGLINE_INFO("Recreate render target: Size(%d*%d) MipLevels(%d) Format(%d).", size.x, size.y, mipLevels, format);
                 renderTarget = _createTextureImpl(size, mipLevels, format, true);
-            else
+            }
+            else {
                 // The render target is created from file.
+                TINYSC_LOGLINE_INFO("Recreate render target from file: File(%s) Size(%d*%d) MipLevels(%d) Format(%d).", 
+                    it.second.srcFilename.c_str(), size.x, size.y, mipLevels, format);
                 renderTarget = _createTextureFromFileImpl(it.second.srcFilename, size, mipLevels, format, true);
+            }
 
-            // One render target can't be recreated, stop and return false to indicate an error happens.
-            // TODO: Log some message
-            if (renderTarget == nullptr)
+            if (renderTarget == nullptr) {
+                // If one render target can't be recreated, stop and return false to indicate an error happens.
+                TINYSC_LOGLINE_ERR("Render target can't be recreated.");
                 return false;
+            }
 
-            it.first->mResource = renderTarget;
+            it.first->mD3dTexture = renderTarget;
         }
     }
 
     return true;
+}
+
+void RenderSystem::_handleEffectsOnDeviceLost()
+{
+    for (auto& it : mEffects)
+        it->OnLostDevice();
+}
+
+void RenderSystem::_handleEffectsOnDeviceReset()
+{
+    for (auto& it : mEffects)
+        it->OnResetDevice();
 }
 
 IDirect3DTexture9* RenderSystem::_createTextureImpl(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget)
@@ -301,9 +372,9 @@ IDirect3DTexture9* RenderSystem::_createTextureImpl(const Size2<UINT>& size, UIN
         );
 
     if (FAILED(hr)) {
-        printf("D3DXCreateTexture failed with result 0x%08x %s.\n", hr, ::DXGetErrorString(hr));
-        printf("\tWidth:%d Height:%d Format:%d\n", size.x, size.y, format);
-        return nullptr;
+        TINYSC_LOGLINE_ERR("D3DXCreateTexture failed 0x%08x %s. Size(%d*%d) mipLevels(%d) Format(%d) RenderTarget(%d).", hr,
+            ::DXGetErrorString(hr), size.x, size.y, mipLevels, format, isRenderTarget);
+        return NULL;
     }
 
     return texture;
@@ -332,9 +403,9 @@ IDirect3DTexture9* RenderSystem::_createTextureFromFileImpl(const std::string& s
         );
 
     if (FAILED(hr)) {
-        printf("D3DXCreateTextureFromFileEx failed with result 0x%08x %s.\n", hr, ::DXGetErrorString(hr));
-        printf("\tFilename: %s Width:%d Height:%d Format:%d\n", srcFilename.c_str(), size.x, size.y, format);
-        return nullptr;
+        TINYSC_LOGLINE_ERR("D3DXCreateTextureFromFileEx failed 0x%08x %s. File(%s) Size(%d*%d) mipLevels(%d) Format(%d) RenderTarget(%d).",
+            hr, ::DXGetErrorString(hr), srcFilename.c_str(), size.x, size.y, mipLevels, format, isRenderTarget);
+        return NULL;
     }
 
     return texture;
@@ -347,57 +418,47 @@ ID3DXMesh* RenderSystem::_createMeshImpl(DWORD numVertices, DWORD numFaces, cons
     HRESULT hr = ::D3DXCreateMesh(
         numFaces,
         numVertices,
-        D3DXMESH_MANAGED,
+        D3DXMESH_MANAGED | D3DXMESH_32BIT,
         declaration,
         mD3dDevice,
         &mesh
         );
 
     if (FAILED(hr)) {
-        printf("D3DXCreateMesh failed with result 0x%08x %s.\n", hr, ::DXGetErrorString(hr));
-        printf("\tFaces:%d Vertices:%d\n", numFaces, numVertices);
-        return nullptr;
+        TINYSC_LOGLINE_ERR("D3DXCreateMesh failed 0x%08x %s. NumVertices(%d) NumFaces(%d).", hr, ::DXGetErrorString(hr), numVertices,
+            numFaces)
+        return NULL;
     }
 
     return mesh;
 }
 
-bool RenderSystem::_createGbuffers()
+ID3DXEffect* RenderSystem::_createEffectFromFileImpl(const std::string& srcFilename, DWORD flags)
 {
-    D3DFORMAT gbufferFormats[] = { D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, D3DFMT_R16F };
-    HRESULT hr = 0;
+    ID3DXEffect* effect = NULL;
+    ID3DXBuffer* errorBuffer = NULL;
+    HRESULT hr = ::D3DXCreateEffectFromFile(
+        mD3dDevice,
+        srcFilename.c_str(),
+        NULL,
+        NULL,
+        flags,
+        NULL,
+        &effect,
+        &errorBuffer
+        );
 
-    for (int i = 0; i < 3; ++i) {
-        hr = ::D3DXCreateTexture(
-            mD3dDevice,
-            mPresentParams.BackBufferWidth,
-            mPresentParams.BackBufferHeight,
-            1,
-            D3DUSAGE_RENDERTARGET,
-            gbufferFormats[i],
-            D3DPOOL_DEFAULT,
-            &mGbuffers[i]
-            );
-
-        printf("Create Gbuffer%d : D3DXCreateTexture 0x%08x %s.\n", i, hr, ::DXGetErrorString(hr));
-
-        if (FAILED(hr))
-            return false;
+    if (errorBuffer) {
+        TINYSC_LOGLINE_INFO("Effect compilation message: %s", (char*)errorBuffer->GetBufferPointer());
+        errorBuffer->Release();
     }
 
-    return true;
-}
-
-void RenderSystem::_destroyGbuffers()
-{
-    for (int i = 0; i < 3; ++i) {
-        if (mGbuffers[i]) {
-            ULONG number = mGbuffers[i]->Release();
-            TINYSC_ASSERT(number == 0, "Gbuffer release unsuccessful.");
-            printf("Release Gbuffer%d : IDirect3DTexture9::Release %d\n", i, number);
-            mGbuffers[i] = NULL;
-        }
+    if (FAILED(hr)) {
+        TINYSC_LOGLINE_ERR("D3DXCreateEffectFromFile result 0x%08x %s. File(%s) Flags(%d).", hr, ::DXGetErrorString(hr),
+            srcFilename.c_str(), flags);
     }
+
+    return effect;
 }
 
 Texture* RenderSystem::createTextureFromFile(const std::string& srcFilename, const Size2<UINT>& size, UINT mipLevels,
@@ -421,29 +482,48 @@ void RenderSystem::destroyTexture(Texture* texture)
     );
     TINYSC_ASSERT(it != mTextures.end(), "The texture is not created by this render system.");
 
-    delete it->first;
+    delete texture;
     mTextures.erase(it);
 }
 
-Mesh* RenderSystem::createMesh(DWORD numVertices, DWORD numFaces, const D3DVERTEXELEMENT9* declaration)
+ID3DXMesh* RenderSystem::createMesh(DWORD numVertices, DWORD numFaces, const D3DVERTEXELEMENT9* declaration)
 {
     ID3DXMesh* mesh = _createMeshImpl(numVertices, numFaces, declaration);
     if (mesh == nullptr)
         return nullptr;
 
-    Mesh* newMesh = new Mesh(mesh);
-    mMeshes.push_back(newMesh);
+    mMeshes.push_back(mesh);
 
-    return newMesh;
+    return mesh;
 }
 
-void RenderSystem::destroyMesh(Mesh* mesh)
+void RenderSystem::destroyMesh(ID3DXMesh* mesh)
 {
     auto& it = std::find(mMeshes.begin(), mMeshes.end(), mesh);
     TINYSC_ASSERT(it != mMeshes.end(), "The mesh is not created by this render system.");
 
-    delete *it;
+    mesh->Release();
     mMeshes.erase(it);
+}
+
+ID3DXEffect* RenderSystem::createEffectFromFile(const std::string& srcFilename, DWORD flags)
+{
+    ID3DXEffect* effect = _createEffectFromFileImpl(srcFilename, flags);
+    if (effect == NULL)
+        return NULL;
+
+    mEffects.push_back(effect);
+
+    return effect;
+}
+
+void RenderSystem::destroyEffect(ID3DXEffect* effect)
+{
+    auto& it = std::find(mEffects.begin(), mEffects.end(), effect);
+    TINYSC_ASSERT(it != mEffects.end(), "The effect is not created by this render system.");
+
+    effect->Release();
+    mEffects.erase(it);
 }
 
 }

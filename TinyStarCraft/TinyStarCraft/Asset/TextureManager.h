@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Asset/ResourceManager.h"
-#include "Rendering/RenderResources.h"
+#include "ResourceManager.h"
+#include "Rendering/Texture.h"
+#include "Utilities/Size2.h"
 
 namespace TinyStarCraft
 {
@@ -57,8 +58,9 @@ public:
      *  @param isRenderTarget
      *  Whether the texture could be used as a render target or not.
      */
-    Texture* createFromFile(const std::string& resourceName, const std::string& fileName, const Size2<UINT>& size = Size2<UINT>::ZERO(),
-        UINT mipLevels = D3DX_DEFAULT, D3DFORMAT format = D3DFMT_UNKNOWN, bool isRenderTarget = false);
+    Texture* createTextureFromFile(const std::string& resourceName, const std::string& fileName, 
+        const Size2<UINT>& size = Size2<UINT>::ZERO(), UINT mipLevels = D3DX_DEFAULT, D3DFORMAT format = D3DFMT_UNKNOWN,
+        bool isRenderTarget = false);
 
     /**
      *	Get the Texture by resource name.

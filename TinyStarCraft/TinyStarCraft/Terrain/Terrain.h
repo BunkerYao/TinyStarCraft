@@ -7,19 +7,22 @@
 namespace TinyStarCraft
 {
 
-class Mesh;
+class Camera;
 class RenderSystem;
+class TerrainMaterial;
 
 class Terrain
 {
 public:
-    /** The side length of one "cell" of terrain's mesh. */
+    /** The side length of one "cell" in terrain's mesh. */
     static constexpr float CELL_SIZE = 45.255f;            
     /** Per-Altitude level height */
     static constexpr float ALTITUDE_LEVEL_HEIGHT = 18.475f; 
-    /* Chunk side length in cells number. */
+    /* Chunk side length measured in cells number. */
     static const int CHUNK_SIZE_N = 8;
-    /* Blend texture side length in cells number. */
+    /* Number of cells per chunk. */
+    static const int CELLS_COUNT_PER_CHUNK = CHUNK_SIZE_N * CHUNK_SIZE_N;
+    /* Blend texture side length measured in cells number. */
     static const int BLEND_TEXTURE_SIZE_N = 8;
 
     /** 15 cell types */
@@ -68,25 +71,34 @@ public:
      *	Constructor
      */
     explicit Terrain(RenderSystem* renderSystem)
-        : mRenderSystem(renderSystem)
+        : mRenderSystem(renderSystem), mMesh(NULL)
     {}
 
     ~Terrain();
 
-    bool init(const Size2d& dimension, const std::vector<int>& cellsData, const std::vector<int>& altitudeLevelData);
-
-private:
-    /**	Create the terrain mesh and devide it into chunks(sub-meshes). */
-    bool _createTerrainMesh();
+    /**
+     *	Create the terrain.
+     *
+     *  @return
+     *  If the terrain is created, returns true. Otherwise returns false.
+     */
+    bool create(const Size2d& dimension, const std::vector<int>& cellsData, const std::vector<int>& altitudeLevelData, 
+        TerrainMaterial* material);
 
     /**
-     *  Modify terrain's mesh.
-     *  Operations includes:
-     *  1. Changing vertices position based on the cell's type and altitude level
-     *  2. Computing vertex normals and smooth them
-     *  3. Generate texture coordinate for the control texture & blend textures. 
+     *	Draw the terrain.
      */
-    void _modifyTerrainMesh();
+    void draw(Camera* camera);
+
+private:
+    /**	Create the terrain mesh and devide it into chunks(sub-meshes).
+     *  Operations includes:
+     *  1. Generate indices.
+     *  2. Changing vertices position based on the cell's type and altitude level
+     *  3. Computing vertex normals and smooth them
+     *  4. Generate texture coordinate for the control texture & blend textures.
+     */
+    bool _createTerrainMesh();
 
     /**
      *	Build quad tree for the terrain.
@@ -100,7 +112,8 @@ private:
 
 private:
     RenderSystem* mRenderSystem;
-    Mesh* mMesh;
+    ID3DXMesh* mMesh;
+    TerrainMaterial* mMaterial;
     Size2d mDimension;
     std::vector<int> mCellsData;
     std::vector<int> mAltitudeLevelData;

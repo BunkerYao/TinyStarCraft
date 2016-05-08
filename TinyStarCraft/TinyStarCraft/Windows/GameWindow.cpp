@@ -2,14 +2,13 @@
 #include "GameWindow.h"
 #include "Utilities/Exceptions.h"
 
-// The window class name
-const char WINDOW_CLASS_NAME[] = "GameWindow";
-
-// The window style (Non-sizeable)
-const unsigned WINDOW_STYLE = WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX)& ~(WS_SIZEBOX);
-
 namespace TinyStarCraft
 {
+
+// The window class name
+const char WINDOW_CLASS_NAME[] = "GameWindow";
+// The window style (Non-sizeable)
+const unsigned WINDOW_STYLE = WS_OVERLAPPEDWINDOW & ~(WS_MAXIMIZEBOX)& ~(WS_SIZEBOX);
 
 GameWindow::GameWindow(WNDPROC wndProcFunc)
     : mhWnd(NULL)
