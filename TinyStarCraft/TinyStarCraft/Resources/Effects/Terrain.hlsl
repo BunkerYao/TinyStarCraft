@@ -1,5 +1,59 @@
 
 float4x3 _ViewProjMatrix;
+texture _BlendTexture0;
+texture _BlendTexture1;
+texture _BlendTexture2;
+texture _BlendTexture3;
+texture _ControlTexture;
+
+sampler BlendTexture0Samp = sampler_state
+{
+    texture = <_BlendTexture0>;
+    AddressU = Wrap;
+    AddressV = Wrap;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
+};
+
+sampler BlendTexture1Samp = sampler_state
+{
+    texture = <_BlendTexture1>;
+    AddressU = Wrap;
+    AddressV = Wrap;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
+};
+
+sampler BlendTexture2Samp = sampler_state
+{
+    texture = <_BlendTexture2>;
+    AddressU = Wrap;
+    AddressV = Wrap;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
+};
+
+sampler BlendTexture3Samp = sampler_state
+{
+    texture = <_BlendTexture3>;
+    AddressU = Wrap;
+    AddressV = Wrap;
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear;
+};
+
+sampler ControlTextureSamp = sampler_state
+{
+    texture = <_ControlTexture>;
+    AddressU = Wrap;
+    AddressV = Wrap;
+    MinFilter = Linear;
+    MagFilter = Linear;
+};
 
 struct AppData
 {
@@ -29,7 +83,12 @@ VertOut VSMain(AppData i)
 
 float4 PSMain(VertOut i) : COLOR
 {
-    return float4(i.controlTexcoord.xy, 0.0f, 1.0f);
+    float4 weight = tex2D(ControlTextureSamp, i.controlTexcoord);
+    weight /= weight.r + weight.g + weight.b;
+    float4 color0 = tex2D(BlendTexture0Samp, i.blendTexcoord) * weight.r;
+    float4 color1 = tex2D(BlendTexture1Samp, i.blendTexcoord) * weight.g;
+    float4 color2 = tex2D(BlendTexture2Samp, i.blendTexcoord) * weight.b;
+    return color0 + color1 + color2;
 }
 
 technique Default
@@ -37,8 +96,6 @@ technique Default
     pass p0
     {
         CullMode = None;
-        ZEnable = False;
-        FillMode = WireFrame;
         vertexshader = compile vs_2_0 VSMain();
         pixelshader = compile ps_2_0 PSMain();
     }

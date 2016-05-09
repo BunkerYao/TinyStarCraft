@@ -8,8 +8,31 @@ namespace TinyStarCraft
 {
 
 class Camera;
+class Ray;
 class RenderSystem;
 class TerrainMaterial;
+class ViewFrustum;
+
+
+struct TerrainRaycastHit
+{
+    float distance;
+    D3DXVECTOR3 hitPosition;
+    Point2d cellLocation;
+
+    /** Two raycast hit are comparable by distance. */
+    bool operator<(const TerrainRaycastHit& other) const
+    {
+        return distance < other.distance;
+    }
+
+    TerrainRaycastHit() = default;
+
+    TerrainRaycastHit(float distance, const D3DXVECTOR3& hitPosition, const Point2d& location)
+        : distance(distance), hitPosition(hitPosition), cellLocation(location)
+    {}
+};
+
 
 class Terrain
 {
@@ -23,7 +46,7 @@ public:
     /* Number of cells per chunk. */
     static const int CELLS_COUNT_PER_CHUNK = CHUNK_SIZE_N * CHUNK_SIZE_N;
     /* Blend texture side length measured in cells number. */
-    static const int BLEND_TEXTURE_SIZE_N = 8;
+    static const int BLEND_TEXTURE_SIZE_N = 4;
 
     /** 15 cell types */
     static const int FLAT = 0;
@@ -48,6 +71,14 @@ private:
     {
         D3DXVECTOR3 vertices[4];
         int indices[6];
+
+        /**
+         *	Perform a Ray-Triangle intersection test.
+         *  
+         *  @return
+         *  Returns the number of hits ranges from 0~2.
+         */
+        int raycast(const D3DXVECTOR3& tilePos, const Ray& ray, float distances[2]) const;
     };
 
     /** Geometries of 15 type of cells. */
@@ -90,6 +121,19 @@ public:
      */
     void draw(Camera* camera);
 
+    /**
+     *	Cast a ray on the terrain and return the nearest hit point.
+     *  
+     *  @Return
+     *  Returns true if there is a hit. Returns false otherwise.
+     */
+    bool raycast(const Ray& ray, TerrainRaycastHit* hit) const;
+
+    /**
+     *	Cast a ray on the terrain and return all hit points from the nearest to the farthest.
+     */
+    bool raycastAll(const Ray& ray, std::vector<TerrainRaycastHit>* hits) const;
+
 private:
     /**	Create the terrain mesh and devide it into chunks(sub-meshes).
      *  Operations includes:
@@ -109,6 +153,30 @@ private:
      *	Subdivide the terrain and create quad tree nodes recursively.
      */
     void _createQuadTreeNodeRecursively(const Rectd& subSquare, QuadTreeNode* parent);
+
+    /**
+     *	Gather visible chunks of the terrain mesh.
+     *  This will traverse the entire quad tree and do frustum-AABB intersection test
+     *  to determine each chunk's visibility. Visible chunk's id will be gathered to 
+     *  the visible chunks array.
+     *
+     *  @param isParentInsideFrustum
+     *  To indicate whether this node's parent is completely inside the camera view frustum.
+     *  If set to true, the Frustum-AABB intersection test will be skipped and the node and all its
+     *  children will be considered as visible nodes since they must be inside the frustum as well.
+     *  Otherwise, a Frustum-AABB intersection test is performed to check whether the node is visible.
+     */
+    void _gatherVisibleChunksRecursively(const QuadTreeNode& node, const ViewFrustum& viewFrustum, bool isParentInsideFrustum, 
+        std::vector<int>* visibleChunks);
+
+    /**
+     *	Traverse the quad tree to find cells which have intersections with the ray, and perform Triangle-Ray intersection
+     *  test on those cells to compute the hit points.
+     */
+    void _findRaycastHitPointsRecursively(const QuadTreeNode& node, const Ray& ray, std::vector<TerrainRaycastHit>* hits) const;
+
+    /** Calculate world space position from cell's location and altitude level */
+    D3DXVECTOR3 _getCellWorldSpacePosition(const Point2d& location, int altitudeLevel) const;
 
 private:
     RenderSystem* mRenderSystem;

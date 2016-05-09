@@ -54,6 +54,11 @@ public:
     bool init(HWND hWnd, const RenderSystemConfig& config);
 
     /**
+     *	Clear the backbuffer.
+     */
+    bool clear(DWORD count, const D3DRECT* rects, DWORD flags, D3DCOLOR color, float z, DWORD stencil);
+
+    /**
      *	Begin to do rendering tasks.
      *
      *  @remarks
@@ -212,6 +217,33 @@ public:
      */
     void destroyEffect(ID3DXEffect* effect);
 
+    /**
+     *	Create a sprite.
+     *
+     *  @return
+     *  Returns NULL if failed.
+     */
+    ID3DXSprite* createSprite();
+
+    /**
+     *	Destroy an sprite created by this render system.
+     */
+    void destroySprite(ID3DXSprite* sprite);
+
+    /**
+     *	Create a font.
+     *
+     *  @return
+     *  Returns NULL if failed.
+     */
+    ID3DXFont* createFont(int height, UINT width, UINT weight, UINT mipLevels, BOOL italic, DWORD charSet, DWORD outputPrecision,
+        DWORD quality, DWORD pitchAndFamily, const std::string& faceName);
+
+    /**
+     *	Destroy a font created by this render system.
+     */
+    void destroyFont(ID3DXFont* font);
+
 private:
     /**
      *	Initialize d3d device.
@@ -269,6 +301,13 @@ private:
     /** Create effect from file. */
     ID3DXEffect* _createEffectFromFileImpl(const std::string& srcFilename, DWORD flags);
 
+    /** Create sprite. */
+    ID3DXSprite* _createSpriteImpl();
+
+    /** Create font. */
+    ID3DXFont* _createFontImpl(int height, UINT width, UINT weight, UINT mipLevels, BOOL italic, DWORD charSet, DWORD outputPrecision,
+        DWORD quality, DWORD pitchAndFamily, LPCSTR faceName);
+
 private:
     IDirect3D9* mD3d;
     IDirect3DDevice9* mD3dDevice;
@@ -302,10 +341,14 @@ private:
     // Since the render targets should be recreated when device is reset, So save a texture description
     // for each texture to keep its creation settings.
     std::list<std::pair<Texture*, TextureCreationDesc>> mTextures;
-    // Meshes created by this render system.
+    // Meshes 
     std::list<ID3DXMesh*> mMeshes;
-    // Effects created by this render system.
+    // Effects
     std::list<ID3DXEffect*> mEffects;
+    // Sprites
+    std::list<ID3DXSprite*> mSprites;
+    // Fonts
+    std::list<ID3DXFont*> mFonts;
 };
 
 };

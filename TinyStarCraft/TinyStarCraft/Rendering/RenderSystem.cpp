@@ -37,6 +37,30 @@ RenderSystem::~RenderSystem()
         mMeshes.clear();
     }
 
+    // Destroy all effects.
+    if (!mEffects.empty()) {
+        for (auto& it : mEffects)
+            it->Release();
+
+        mEffects.clear();
+    }
+
+    // Destroy all sprites.
+    if (!mSprites.empty()) {
+        for (auto& it : mSprites)
+            it->Release();
+
+        mSprites.clear();
+    }
+
+    // Destroy all fonts.
+    if (!mFonts.empty()) {
+        for (auto& it : mFonts)
+            it->Release();
+
+        mFonts.clear();
+    }
+
     if (mD3dDevice) {
         releaseNumber = mD3dDevice->Release();
         TINYSC_LOGLINE_INFO("IDirect3DDevice::Release %d", releaseNumber);
@@ -52,6 +76,15 @@ bool RenderSystem::init(HWND hWnd, const RenderSystemConfig& config)
 {
     // Initialize the d3d device.
     return _initD3dDevice(hWnd, config);
+}
+
+bool RenderSystem::clear(DWORD count, const D3DRECT* rects, DWORD flags, D3DCOLOR color, float z, DWORD stencil)
+{
+    HRESULT hr = mD3dDevice->Clear(count, rects, flags, color, z, stencil);
+    if (FAILED(hr))
+        TINYSC_LOGLINE_ERR("IDirect3DDevice9::Clear failed 0x%08x %s", hr, ::DXGetErrorString(hr));
+
+    return SUCCEEDED(hr);
 }
 
 bool RenderSystem::beginScene()
@@ -194,19 +227,6 @@ bool RenderSystem::resetRenderTarget()
         TINYSC_LOGLINE_ERR("ID3DDevice9::SetRenderTarget failed 0x%08x %s", hr, ::DXGetErrorString(hr));
 
     return SUCCEEDED(hr);
-}
-
-Texture* RenderSystem::createTexture(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget)
-{
-    IDirect3DTexture9* texture = _createTextureImpl(size, mipLevels, format, isRenderTarget);
-    if (texture == nullptr)
-        return nullptr;
-
-    Texture* newTexture = new Texture(texture);
-    TextureCreationDesc desc(size, mipLevels, format, isRenderTarget, "");
-    mTextures.push_back(std::make_pair(newTexture, desc));
-
-    return newTexture;
 }
 
 bool RenderSystem::_initD3dDevice(HWND hWnd, const RenderSystemConfig& config)
@@ -461,6 +481,41 @@ ID3DXEffect* RenderSystem::_createEffectFromFileImpl(const std::string& srcFilen
     return effect;
 }
 
+ID3DXSprite* RenderSystem::_createSpriteImpl()
+{
+    ID3DXSprite* sprite = NULL;
+    HRESULT hr = ::D3DXCreateSprite(mD3dDevice, &sprite);
+    if (FAILED(hr))
+        TINYSC_LOGLINE_ERR("::D3DXCreateSprite failed 0x%08x %s.", hr, ::DXGetErrorString(hr));
+
+    return sprite;
+}
+
+ID3DXFont* RenderSystem::_createFontImpl(int height, UINT width, UINT weight, UINT mipLevels, BOOL italic, DWORD charSet,
+    DWORD outputPrecision, DWORD quality, DWORD pitchAndFamily, LPCSTR faceName)
+{
+    ID3DXFont* font = NULL;
+    HRESULT hr = ::D3DXCreateFont(mD3dDevice, height, width, weight, mipLevels, italic, charSet, outputPrecision, quality,
+        pitchAndFamily, faceName, &font);
+    if (FAILED(hr))
+        TINYSC_LOGLINE_ERR("::D3DXCreateFont failed 0x%08x %s.", hr, ::DXGetErrorString(hr));
+
+    return font;
+}
+
+Texture* RenderSystem::createTexture(const Size2<UINT>& size, UINT mipLevels, D3DFORMAT format, bool isRenderTarget)
+{
+    IDirect3DTexture9* texture = _createTextureImpl(size, mipLevels, format, isRenderTarget);
+    if (texture == nullptr)
+        return nullptr;
+
+    Texture* newTexture = new Texture(texture);
+    TextureCreationDesc desc(size, mipLevels, format, isRenderTarget, "");
+    mTextures.push_back(std::make_pair(newTexture, desc));
+
+    return newTexture;
+}
+
 Texture* RenderSystem::createTextureFromFile(const std::string& srcFilename, const Size2<UINT>& size, UINT mipLevels,
     D3DFORMAT format, bool isRenderTarget)
 {
@@ -524,6 +579,48 @@ void RenderSystem::destroyEffect(ID3DXEffect* effect)
 
     effect->Release();
     mEffects.erase(it);
+}
+
+ID3DXSprite* RenderSystem::createSprite()
+{
+    ID3DXSprite* sprite = _createSpriteImpl();
+    if (sprite == NULL)
+        return NULL;
+
+    mSprites.push_back(sprite);
+
+    return sprite;
+}
+
+void RenderSystem::destroySprite(ID3DXSprite* sprite)
+{
+    auto& it = std::find(mSprites.begin(), mSprites.end(), sprite);
+    TINYSC_ASSERT(it != mSprites.end(), "The sprite is not created by this render system.");
+
+    sprite->Release();
+    mSprites.erase(it);
+}
+
+ID3DXFont* RenderSystem::createFont(int height, UINT width, UINT weight, UINT mipLevels, BOOL italic, DWORD charSet,
+    DWORD outputPrecision, DWORD quality, DWORD pitchAndFamily, const std::string& faceName)
+{
+    ID3DXFont* font = _createFontImpl(height, width, weight, mipLevels, italic, charSet, outputPrecision, quality, pitchAndFamily, 
+        faceName.c_str());
+    if (font == NULL)
+        return NULL;
+
+    mFonts.push_back(font);
+
+    return font;
+}
+
+void RenderSystem::destroyFont(ID3DXFont* font)
+{
+    auto& it = std::find(mFonts.begin(), mFonts.end(), font);
+    TINYSC_ASSERT(it != mFonts.end(), "The font is not created by this render system.");
+
+    font->Release();
+    mFonts.erase(it);
 }
 
 }

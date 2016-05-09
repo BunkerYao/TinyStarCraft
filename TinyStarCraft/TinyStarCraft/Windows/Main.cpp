@@ -16,7 +16,8 @@ public:
     Application()
         : mGameWindow(WndProc),
           mTextureManager(nullptr),
-          mCamera(nullptr)
+          mCamera(nullptr),
+          mTerrain(nullptr)
     {
     }
 
@@ -53,22 +54,36 @@ public:
         mTextureManager = new TextureManager(&mRenderSystem);
 
         // Try to load a texture.
-        mTextureManager->createTextureFromFile("Test", "./Resources/marine_diffuse_blood__.dds");
+        mTextureManager->createTextureFromFile("Test", "./Resources/Textures/marine_diffuse_blood__.dds");
+        mTextureManager->createTextureFromFile("Dirt", "./Resources/Textures/terr_dirt-grass.jpg");
+        mTextureManager->createTextureFromFile("Rock", "./Resources/Textures/terr_rock-dirt.jpg");
+        mTextureManager->createTextureFromFile("grass0", "./Resources/Textures/crackeddirt-2048.jpg");
+        mTextureManager->createTextureFromFile("grass1", "./Resources/Textures/grass_1024.jpg");
+        mTextureManager->createTextureFromFile("Control", "./Resources/Textures/TerrainControl.dds");
 
         // Create an terrain material.
-        mMaterialManager->createMaterial("terrain", "terrain");
+        TerrainMaterial* terrainMaterial = static_cast<TerrainMaterial*>(mMaterialManager->createMaterial("terrain", "terrain"));
+        if (terrainMaterial == nullptr)
+            return false;
+
+        terrainMaterial->beginParameterChange();
+        terrainMaterial->setBlendTexture(0, mTextureManager->getTexture("Dirt"));
+        terrainMaterial->setBlendTexture(1, mTextureManager->getTexture("Rock"));
+        terrainMaterial->setBlendTexture(2, mTextureManager->getTexture("grass0"));
+        terrainMaterial->setBlendTexture(3, mTextureManager->getTexture("grass1"));
+        terrainMaterial->setControlTexture(mTextureManager->getTexture("Control"));
+        terrainMaterial->endParameterChange();
 
         // Create a camera
-        mCamera = new Camera(Size2f(800.0f, 600.0f), D3DXVECTOR3(600.0f, 400.0f, 600.0f));
+        mCamera = new Camera(Size2f(800.0f, 600.0f), D3DXVECTOR3(2200.0f, 1200.0f, 2200.0f));
 
         // Create a terrain
-        Size2d terrainDimension(16, 16);
+        Size2d terrainDimension(64, 64);
         std::vector<int> cellsData(terrainDimension.x * terrainDimension.y, 0);
         for (int i = 0; i < 15; ++i)
             cellsData[i] = i;
         std::vector<int> altitudeLevelData(terrainDimension.x * terrainDimension.y, 0);
         altitudeLevelData[0] = 0;
-        TerrainMaterial* terrainMaterial = static_cast<TerrainMaterial*>(mMaterialManager->getMaterial("terrain"));
         mTerrain = new Terrain(&mRenderSystem);
         mTerrain->create(terrainDimension, cellsData, altitudeLevelData, terrainMaterial);
         
@@ -90,6 +105,7 @@ public:
             }
 
             // TODO: Frame logic and render
+            mRenderSystem.clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER | D3DCLEAR_STENCIL, D3DXCOLOR(0.0f, 0.0f, 0.0f, 1.0f), 1.0f, 0);
             mRenderSystem.beginScene();
             mTerrain->draw(mCamera);
             mRenderSystem.endScene();

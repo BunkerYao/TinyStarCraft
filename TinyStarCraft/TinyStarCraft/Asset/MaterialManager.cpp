@@ -18,6 +18,9 @@ MaterialManager::MaterialManager(RenderSystem* renderSystem)
 
 MaterialManager::~MaterialManager()
 {
+    // Must destroy all materials before destroy effects.
+    destroyAllResources();
+
     delete mEffectManager;
 }
 

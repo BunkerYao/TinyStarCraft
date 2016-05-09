@@ -4,9 +4,11 @@
 #include "Rendering/Camera.h"
 #include "Rendering/RenderSystem.h"
 #include "Rendering/Texture.h"
+#include "Utilities/DebugOutput.h"
 #include "Utilities/Logging.h"
 #include "Utilities/Math.h"
 #include "Utilities/Point2.h"
+#include "Utilities/Ray.h"
 
 namespace TinyStarCraft
 {
@@ -234,24 +236,57 @@ bool Terrain::create(const Size2d& dimension, const std::vector<int>& cellsData,
 
 void Terrain::draw(Camera* camera)
 {
-    // Test drawing code.
+    // Gather visible chunks
+    std::vector<int> visibleChunks;
+    _gatherVisibleChunksRecursively(mQuadTreeNodes.front(), camera->getViewFrustum(), false, &visibleChunks);
+    OutputDebugStringF("Visible chunks count:%d.\n", visibleChunks.size());
+
     ID3DXEffect* terrainEffect = mMaterial->getEffect();
-    
     D3DXMATRIX viewProjMatrix = camera->getViewMatrix() * camera->getProjMatrix();
     terrainEffect->SetMatrix("_ViewProjMatrix", &viewProjMatrix);
+
+    // Apply material parameters.
+    mMaterial->apply();
 
     UINT passesCount = 0;
     terrainEffect->Begin(&passesCount, 0);
     terrainEffect->BeginPass(0);
     
-    int chunksCount = (mDimension.x * mDimension.y) / (CHUNK_SIZE_N * CHUNK_SIZE_N);
-    /*for (int i = 0; i < chunksCount; ++i) {
-        mMesh->DrawSubset(i);
-    }*/
-    mMesh->DrawSubset(2);
+    for (auto& it : visibleChunks)
+        mMesh->DrawSubset(it);
 
     terrainEffect->EndPass();
     terrainEffect->End();
+}
+
+bool Terrain::raycast(const Ray& ray, TerrainRaycastHit* hit) const
+{
+    // Get all hits.
+    std::vector<TerrainRaycastHit> hits;
+    _findRaycastHitPointsRecursively(mQuadTreeNodes.front(), ray, &hits);
+
+    if (!hits.empty()) {
+        // Sort the hits by distance to find the nearst hit.
+        std::sort(hits.begin(), hits.end());
+        *hit = hits.front();
+        return true;
+    }
+
+    return false;
+}
+
+bool Terrain::raycastAll(const Ray& ray, std::vector<TerrainRaycastHit>* hits) const
+{
+    // Get all hits.
+    _findRaycastHitPointsRecursively(mQuadTreeNodes.front(), ray, hits);
+
+    if (!hits->empty()) {
+        // Sort the hits by distance
+        std::sort(hits->begin(), hits->end());
+        return true;
+    }
+
+    return false;
 }
 
 bool Terrain::_createTerrainMesh()
@@ -284,7 +319,8 @@ bool Terrain::_createTerrainMesh()
         }
     }
     mMesh->UnlockAttributeBuffer();
-    // Optimize the mesh
+
+    // Optimize the mesh to increase draw performence.
     DWORD* adjacencyBuffer = new DWORD[mMesh->GetNumFaces() * 3];
     mMesh->GenerateAdjacency(0.0f, adjacencyBuffer);
     mMesh->OptimizeInplace(D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE, adjacencyBuffer, NULL, NULL, NULL);
@@ -292,7 +328,7 @@ bool Terrain::_createTerrainMesh()
 
     // Modify mesh vertex properties and generate indices.
 
-    // Blend texture coordinate for one cell.
+    // Blending texture coordinate for one cell.
     const float cellBlendTexcoordStride = 1.0f / BLEND_TEXTURE_SIZE_N;
     D3DXVECTOR2 cellBlendTexcoord[4] =
     {
@@ -474,12 +510,7 @@ void Terrain::_createQuadTreeNodeRecursively(const Rectd& subSquare, QuadTreeNod
         D3DXVECTOR3 halfSize = { CELL_SIZE * 0.5f, 0.0f, CELL_SIZE * 0.5f };
         const int cellIndex = subSquare.getPosition().y * mDimension.x + subSquare.getPosition().x;
         const int altitudeLevel = mAltitudeLevelData[cellIndex];
-        D3DXVECTOR3 worldPos =
-        {
-            CELL_SIZE * subSquare.getPosition().x,
-            ALTITUDE_LEVEL_HEIGHT * altitudeLevel,
-            CELL_SIZE * subSquare.getPosition().y
-        };
+        D3DXVECTOR3 worldPos = _getCellWorldSpacePosition(subSquare.getPosition(), altitudeLevel);
         D3DXVECTOR3 min = worldPos - halfSize;
         D3DXVECTOR3 max = worldPos + halfSize;
 
@@ -498,6 +529,103 @@ void Terrain::_createQuadTreeNodeRecursively(const Rectd& subSquare, QuadTreeNod
     // Add the current node to its parent's children array.
     if (parent)
         parent->children[parent->childrenCount++] = &currentNode;
+}
+
+void Terrain::_gatherVisibleChunksRecursively(const QuadTreeNode& node, const ViewFrustum& viewFrustum, bool isParentInsideFrustum,
+    std::vector<int>* visibleChunks)
+{
+    int aabbCullingResult = ViewFrustum::AABB_INSIDE;
+
+    if (!isParentInsideFrustum) {
+        // If parent is not completely inside the frustum, then perform Frustum-AABB intersection test.
+        aabbCullingResult = viewFrustum.hasIntersection(node.aabb);
+
+        if (aabbCullingResult == ViewFrustum::AABB_OUTSIDE)
+            // If this node is completely outside of the frustum, then there is no need to check its children.
+            return;
+    }
+
+    if (node.chunk != -1) {
+        // The node has a chunk, add it to the array.
+        visibleChunks->push_back(node.chunk);
+        return;
+    }
+    else {
+        // Check its children rescursively.
+        isParentInsideFrustum = (aabbCullingResult == ViewFrustum::AABB_INSIDE);
+        for (int i = 0; i < 4; ++i) {
+            QuadTreeNode* child = node.children[i];
+            if (child) {
+                _gatherVisibleChunksRecursively(*child, viewFrustum, isParentInsideFrustum, visibleChunks);
+            }
+        }
+    }
+}
+
+void Terrain::_findRaycastHitPointsRecursively(const QuadTreeNode& node, const Ray& ray, std::vector<TerrainRaycastHit>* hits) const
+{
+    if (ray.intersectAABB(node.aabb) == false)
+        // The ray has no intersection with the AABB of this node.
+        return;
+
+    if (node.childrenCount != 0) {
+        // Continue to test its children.
+        for (int i = 0; i < 4; ++i) {
+            QuadTreeNode* child = node.children[i];
+            if (child) {
+                _findRaycastHitPointsRecursively(*child, ray, hits);
+            }
+        }
+    }
+    else {
+        // This node has no children so it must be a cell. Perform Triangle-Ray intersection test.
+        
+        // Get this cell's geometry.
+        const int cellType = mCellsData[node.cell];
+        const int altitudeLevel = mCellsData[node.cell];
+        const CellGeometry& cellGeometry = CELL_GEOMETRIES()[cellType];
+
+        float distances[2];
+        Point2d cellLocation(node.cell % mDimension.x, node.cell / mDimension.x);
+        int hitCount = cellGeometry.raycast(_getCellWorldSpacePosition(cellLocation, altitudeLevel), ray, distances);
+
+        D3DXVECTOR3 hitPosition;
+        for (int i = 0; i < hitCount; ++i) {
+            hitPosition = ray.getPointOnRay(distances[i]);
+            hits->push_back(TerrainRaycastHit(distances[i], hitPosition, cellLocation));
+        }
+    }
+}
+
+D3DXVECTOR3 Terrain::_getCellWorldSpacePosition(const Point2d& location, int altitudeLevel) const
+{
+    return D3DXVECTOR3(CELL_SIZE * location.y, ALTITUDE_LEVEL_HEIGHT * altitudeLevel, CELL_SIZE * location.x);
+}
+
+int Terrain::CellGeometry::raycast(const D3DXVECTOR3& tilePos, const Ray& ray, float distances[2]) const
+{
+    D3DXVECTOR3 verticesInWorld[] =
+    {
+        vertices[0] + tilePos,
+        vertices[1] + tilePos,
+        vertices[2] + tilePos,
+        vertices[3] + tilePos,
+    };
+
+    int hitCount = 0;
+    D3DXVECTOR3 v0, v1, v2;
+    float dist, u, v;
+    for (int i = 0; i < 2; ++i) {
+        v0 = verticesInWorld[indices[i * 3]];
+        v1 = verticesInWorld[indices[i * 3 + 1]];
+        v2 = verticesInWorld[indices[i * 3 + 2]];
+
+        if (::D3DXIntersectTri(&v0, &v1, &v2, &ray.getOrigin(), &ray.getDirection(), &u, &v, &dist)) {
+            distances[hitCount++] = dist;
+        }
+    }
+
+    return hitCount;
 }
 
 }

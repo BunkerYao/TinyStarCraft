@@ -159,6 +159,7 @@
     <ClInclude Include="Asset\MaterialManager.h" />
     <ClInclude Include="Rendering\Camera.h" />
     <ClInclude Include="Precompiled.h" />
+    <ClInclude Include="Utilities\DebugOutput.h" />
     <ClInclude Include="Rendering\Material.h" />
     <ClInclude Include="Rendering\Texture.h" />
     <ClInclude Include="Rendering\RenderSystem.h" />
@@ -171,6 +172,7 @@
     <ClInclude Include="Utilities\Logging.h" />
     <ClInclude Include="Utilities\Math.h" />
     <ClInclude Include="Utilities\Point2.h" />
+    <ClInclude Include="Utilities\Ray.h" />
     <ClInclude Include="Utilities\Rect2.h" />
     <ClInclude Include="Utilities\Size2.h" />
     <ClInclude Include="Utilities\Vector2.h" />
@@ -190,7 +192,9 @@
     <ClCompile Include="Rendering\RenderSystem.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
     <ClCompile Include="Terrain\Terrain.cpp" />
+    <ClCompile Include="Terrain\TerrainMaterial.cpp" />
     <ClCompile Include="Utilities\Logging.cpp" />
+    <ClCompile Include="Utilities\Ray.cpp" />
     <ClCompile Include="Windows\GameWindow.cpp" />
     <ClCompile Include="Windows\Main.cpp" />
   </ItemGroup>
