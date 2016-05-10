@@ -63,6 +63,18 @@ const ViewFrustum& Camera::getViewFrustum()
     return mViewFrustum;
 }
 
+TinyStarCraft::Ray Camera::screenPointToRay(const Point2f& point)
+{
+    D3DXVECTOR4 direction(0.0f, 0.0f, 1.0f, 0.0f);
+    D3DXVECTOR4 origin(point.x - mViewportSize.x * 0.5f, mViewportSize.y * 0.5f - point.y, 0.0f, 1.0f);
+
+    D3DXMATRIX transformMat = getTransformMatrix();
+    ::D3DXVec4Transform(&origin, &origin, &transformMat);
+    ::D3DXVec4Transform(&direction, &direction, &transformMat);
+
+    return Ray(D3DXVECTOR3(origin), D3DXVECTOR3(direction));
+}
+
 void Camera::_updateViewMatrix()
 {
     float lookAtOffset = mPosition.y * sqrtf(1.5f);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Utilities/Point2.h"
+#include "Utilities/Ray.h"
 #include "Utilities/Size2.h"
 
 namespace TinyStarCraft
@@ -86,6 +88,9 @@ public:
 
     /** Get the view frustum. */
     const ViewFrustum& getViewFrustum();
+
+    /* Get a ray going from camera through a screen point. */
+    Ray screenPointToRay(const Point2f& point);
 
 private:
     /* Update the view matrix form current camera position. */

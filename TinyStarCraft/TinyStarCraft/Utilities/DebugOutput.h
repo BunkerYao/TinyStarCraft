@@ -8,7 +8,7 @@ namespace TinyStarCraft
 /**
  *	Print a formatted message on output window
  */
-void OutputDebugStringF(const char* format, ...)
+inline void OutputDebugStringF(const char* format, ...)
 {
     char str[MAX_DEBUG_OUTPUT_LENGTH];
 

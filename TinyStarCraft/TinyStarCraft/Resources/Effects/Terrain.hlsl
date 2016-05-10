@@ -96,6 +96,7 @@ technique Default
     pass p0
     {
         CullMode = None;
+        //FillMode = Wireframe;
         vertexshader = compile vs_2_0 VSMain();
         pixelshader = compile ps_2_0 PSMain();
     }

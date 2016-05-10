@@ -239,7 +239,7 @@ void Terrain::draw(Camera* camera)
     // Gather visible chunks
     std::vector<int> visibleChunks;
     _gatherVisibleChunksRecursively(mQuadTreeNodes.front(), camera->getViewFrustum(), false, &visibleChunks);
-    OutputDebugStringF("Visible chunks count:%d.\n", visibleChunks.size());
+    //OutputDebugStringF("Visible chunks count:%d.\n", visibleChunks.size());
 
     ID3DXEffect* terrainEffect = mMaterial->getEffect();
     D3DXMATRIX viewProjMatrix = camera->getViewMatrix() * camera->getProjMatrix();
@@ -582,7 +582,7 @@ void Terrain::_findRaycastHitPointsRecursively(const QuadTreeNode& node, const R
         
         // Get this cell's geometry.
         const int cellType = mCellsData[node.cell];
-        const int altitudeLevel = mCellsData[node.cell];
+        const int altitudeLevel = mAltitudeLevelData[node.cell];
         const CellGeometry& cellGeometry = CELL_GEOMETRIES()[cellType];
 
         float distances[2];

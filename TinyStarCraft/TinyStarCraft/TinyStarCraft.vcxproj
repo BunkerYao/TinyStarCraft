@@ -159,6 +159,7 @@
     <ClInclude Include="Asset\MaterialManager.h" />
     <ClInclude Include="Rendering\Camera.h" />
     <ClInclude Include="Precompiled.h" />
+    <ClInclude Include="Terrain\TerrainBuilder.h" />
     <ClInclude Include="Utilities\DebugOutput.h" />
     <ClInclude Include="Rendering\Material.h" />
     <ClInclude Include="Rendering\Texture.h" />
@@ -191,6 +192,7 @@
     </ClCompile>
     <ClCompile Include="Rendering\RenderSystem.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
+    <ClCompile Include="Terrain\TerrainBuilder.cpp" />
     <ClCompile Include="Terrain\Terrain.cpp" />
     <ClCompile Include="Terrain\TerrainMaterial.cpp" />
     <ClCompile Include="Utilities\Logging.cpp" />

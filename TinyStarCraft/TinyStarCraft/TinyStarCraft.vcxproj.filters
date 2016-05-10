@@ -52,6 +52,7 @@
     <ClInclude Include="Rendering\Camera.h" />
     <ClInclude Include="Utilities\DebugOutput.h" />
     <ClInclude Include="Utilities\Ray.h" />
+    <ClInclude Include="Terrain\TerrainBuilder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Precompiled.cpp" />
@@ -71,6 +72,7 @@
     <ClCompile Include="Rendering\Camera.cpp" />
     <ClCompile Include="Terrain\TerrainMaterial.cpp" />
     <ClCompile Include="Utilities\Ray.cpp" />
+    <ClCompile Include="Terrain\TerrainBuilder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\Effects\Terrain.hlsl" />

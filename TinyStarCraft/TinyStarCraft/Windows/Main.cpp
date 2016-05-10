@@ -6,7 +6,9 @@
 #include "Rendering/Camera.h"
 #include "Rendering/RenderSystem.h"
 #include "Terrain/Terrain.h"
+#include "Terrain/TerrainBuilder.h"
 #include "Terrain/TerrainMaterial.h"
+#include "Utilities/DebugOutput.h"
 
 using namespace TinyStarCraft;
 
@@ -17,7 +19,8 @@ public:
         : mGameWindow(WndProc),
           mTextureManager(nullptr),
           mCamera(nullptr),
-          mTerrain(nullptr)
+          mTerrain(nullptr),
+          mTerrainBuilder(Size2d(64, 64))
     {
     }
 
@@ -75,17 +78,12 @@ public:
         terrainMaterial->endParameterChange();
 
         // Create a camera
-        mCamera = new Camera(Size2f(800.0f, 600.0f), D3DXVECTOR3(2200.0f, 1200.0f, 2200.0f));
+        mCamera = new Camera(Size2f(800.0f, 600.0f), D3DXVECTOR3(2000.0f, 1200.0f, 2000.0f));
 
         // Create a terrain
-        Size2d terrainDimension(64, 64);
-        std::vector<int> cellsData(terrainDimension.x * terrainDimension.y, 0);
-        for (int i = 0; i < 15; ++i)
-            cellsData[i] = i;
-        std::vector<int> altitudeLevelData(terrainDimension.x * terrainDimension.y, 0);
-        altitudeLevelData[0] = 0;
         mTerrain = new Terrain(&mRenderSystem);
-        mTerrain->create(terrainDimension, cellsData, altitudeLevelData, terrainMaterial);
+        mTerrain->create(mTerrainBuilder.getDimension(), mTerrainBuilder.getCellsData(), mTerrainBuilder.getAltitudeLevelData(), 
+            terrainMaterial);
         
         return true;
     }
@@ -127,9 +125,30 @@ public:
         switch (uMsg)
         {
         case WM_DESTROY:
+        {
             ::PostQuitMessage(0);
             return true;
+        }
+        case WM_RBUTTONUP:
+        case WM_LBUTTONUP:
+        {
+            Point2f cursorPos((float)GET_X_LPARAM(lParam), (float)GET_Y_LPARAM(lParam));
+            Ray ray = mCamera->screenPointToRay(cursorPos);
 
+            TerrainRaycastHit hit;
+            if (mTerrain->raycast(ray, &hit)) {
+                if (uMsg == WM_LBUTTONUP)
+                    mTerrainBuilder.highten(hit.cellLocation);
+                else
+                    mTerrainBuilder.lower(hit.cellLocation);
+
+                delete mTerrain;
+                mTerrain = new Terrain(&mRenderSystem);
+                TerrainMaterial* material = static_cast<TerrainMaterial*>(mMaterialManager->getMaterial("terrain"));
+                mTerrain->create(mTerrainBuilder.getDimension(), mTerrainBuilder.getCellsData(), mTerrainBuilder.getAltitudeLevelData(),
+                    material);
+            }
+        }
         default:
             break;
         }
@@ -160,6 +179,7 @@ private:
     TextureManager* mTextureManager;
     Terrain* mTerrain;
     Camera* mCamera;
+    TerrainBuilder mTerrainBuilder;
 };
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
