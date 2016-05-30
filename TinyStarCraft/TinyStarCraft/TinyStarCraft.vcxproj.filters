@@ -35,24 +35,31 @@
     <ClInclude Include="Windows\GameWindow.h">
       <Filter>Windows</Filter>
     </ClInclude>
-    <ClInclude Include="Utilities\Exceptions.h">
-      <Filter>Utilities</Filter>
-    </ClInclude>
     <ClInclude Include="Rendering\RenderSystem.h" />
     <ClInclude Include="Asset\ResourceManager.h" />
     <ClInclude Include="Asset\TextureManager.h" />
-    <ClInclude Include="Terrain\Terrain.h" />
     <ClInclude Include="Utilities\AABB.h" />
-    <ClInclude Include="Rendering\Texture.h" />
-    <ClInclude Include="Terrain\TerrainMaterial.h" />
-    <ClInclude Include="Rendering\Material.h" />
     <ClInclude Include="Asset\EffectManager.h" />
     <ClInclude Include="Asset\MaterialManager.h" />
     <ClInclude Include="Utilities\Logging.h" />
-    <ClInclude Include="Rendering\Camera.h" />
     <ClInclude Include="Utilities\DebugOutput.h" />
     <ClInclude Include="Utilities\Ray.h" />
-    <ClInclude Include="Terrain\TerrainBuilder.h" />
+    <ClInclude Include="Windows\Time.h" />
+    <ClInclude Include="Utilities\Exception.h">
+      <Filter>Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="Utilities\Region.h" />
+    <ClInclude Include="Asset\Texture.h" />
+    <ClInclude Include="Asset\Resource.h" />
+    <ClInclude Include="Asset\Material.h" />
+    <ClInclude Include="Asset\Effect.h" />
+    <ClInclude Include="Asset\Mesh.h" />
+    <ClInclude Include="Rendering\Camera.h" />
+    <ClInclude Include="Rendering\IsometricSprite.h" />
+    <ClInclude Include="Rendering\IsometricSpriteRenderer.h" />
+    <ClInclude Include="Rendering\Scene.h" />
+    <ClInclude Include="Rendering\Terrain.h" />
+    <ClInclude Include="Rendering\TerrainModifier.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Precompiled.cpp" />
@@ -65,16 +72,32 @@
     <ClCompile Include="Rendering\RenderSystem.cpp" />
     <ClCompile Include="Asset\ResourceManager.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
-    <ClCompile Include="Terrain\Terrain.cpp" />
     <ClCompile Include="Asset\EffectManager.cpp" />
     <ClCompile Include="Asset\MaterialManager.cpp" />
     <ClCompile Include="Utilities\Logging.cpp" />
-    <ClCompile Include="Rendering\Camera.cpp" />
-    <ClCompile Include="Terrain\TerrainMaterial.cpp" />
     <ClCompile Include="Utilities\Ray.cpp" />
-    <ClCompile Include="Terrain\TerrainBuilder.cpp" />
+    <ClCompile Include="Windows\Time.cpp" />
+    <ClCompile Include="Utilities\Region.cpp" />
+    <ClCompile Include="Asset\Texture.cpp" />
+    <ClCompile Include="Asset\Material.cpp" />
+    <ClCompile Include="Asset\Effect.cpp" />
+    <ClCompile Include="Asset\Mesh.cpp" />
+    <ClCompile Include="Rendering\Camera.cpp" />
+    <ClCompile Include="Rendering\IsometricSprite.cpp" />
+    <ClCompile Include="Rendering\IsometricSpriteRenderer.cpp" />
+    <ClCompile Include="Rendering\Scene.cpp" />
+    <ClCompile Include="Rendering\Terrain.cpp" />
+    <ClCompile Include="Rendering\TerrainModifier.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Effects\Terrain.hlsl" />
+    <None Include="Resources\Effects\Src\Internal\Common.hlsli" />
+    <None Include="Resources\Effects\Src\Internal\IsometricSprite.hlsli" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resources\Effects\Src\Internal\DeferredLighting.hlsl" />
+    <FxCompile Include="Resources\Effects\Src\Internal\SharedParameters.hlsl" />
+    <FxCompile Include="Resources\Effects\Src\Internal\Terrain.hlsl" />
+    <FxCompile Include="Resources\Effects\Src\Internal\Water.hlsl" />
+    <FxCompile Include="Resources\Effects\Src\Internal\DefaultIsometricSprite.hlsl" />
   </ItemGroup>
 </Project>

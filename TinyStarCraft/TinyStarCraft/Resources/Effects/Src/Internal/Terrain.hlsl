@@ -1,5 +1,5 @@
+#include "Common.hlsli"
 
-float4x3 _ViewProjMatrix;
 texture _BlendTexture0;
 texture _BlendTexture1;
 texture _BlendTexture2;
@@ -69,34 +69,44 @@ struct VertOut
     float3 normal : TEXCOORD0;
     float2 blendTexcoord : TEXCOORD1;
     float2 controlTexcoord : TEXCOORD2;
+    float fWorldHeight : TEXCOORD3;
 };
 
 VertOut VSMain(AppData i)
 {
     VertOut o;
-    o.pos = float4(mul(i.pos, _ViewProjMatrix), 1.0f);
+    o.pos = WORLD_TO_CLIP(i.pos);
     o.normal = i.normal;
     o.blendTexcoord = i.blendTexcoord;
     o.controlTexcoord = i.controlTexcoord;
+	o.fWorldHeight = i.pos.y;
     return o;
 }
 
-float4 PSMain(VertOut i) : COLOR
+GbufferOutput PSMain(VertOut i)
 {
-    float4 weight = tex2D(ControlTextureSamp, i.controlTexcoord);
-    weight /= weight.r + weight.g + weight.b;
-    float4 color0 = tex2D(BlendTexture0Samp, i.blendTexcoord) * weight.r;
-    float4 color1 = tex2D(BlendTexture1Samp, i.blendTexcoord) * weight.g;
-    float4 color2 = tex2D(BlendTexture2Samp, i.blendTexcoord) * weight.b;
-    return color0 + color1 + color2;
+	GbufferOutput o;
+
+    float4 vWeight = tex2D(ControlTextureSamp, i.controlTexcoord);
+	vWeight /= vWeight.r + vWeight.g + vWeight.b;
+
+	float4 color0 = tex2D(BlendTexture0Samp, i.blendTexcoord) * vWeight.r;
+	float4 color1 = tex2D(BlendTexture1Samp, i.blendTexcoord) * vWeight.g;
+	float4 color2 = tex2D(BlendTexture2Samp, i.blendTexcoord) * vWeight.b;
+
+    o.c0 = color0 + color1 + color2;
+    o.c1 = float4(i.normal * 0.5f + 0.5f, 1.0f);
+	o.c2 = i.fWorldHeight;
+	o.h = i.fWorldHeight / MAX_WORLD_HEIGHT;
+
+    return o;
 }
 
 technique Default
 {
     pass p0
     {
-        CullMode = None;
-        //FillMode = Wireframe;
+        ZFunc = GreaterEqual;
         vertexshader = compile vs_2_0 VSMain();
         pixelshader = compile ps_2_0 PSMain();
     }

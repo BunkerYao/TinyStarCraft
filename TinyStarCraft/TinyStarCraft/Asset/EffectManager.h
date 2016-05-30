@@ -5,53 +5,53 @@
 namespace TinyStarCraft 
 {
 
-class RenderSystem;
+class Effect;
 
+/**
+    Manages effect resources creation and destroy.
+@remarks
+    Effects created by effect manager could be retrieved by its resource name.
+    Effects created by one effect manager shares one effect pool.
+ */
 class EffectManager : public ResourceManager
 {
 public:
-    class EffectResourceContainer : public Resource
-    {
-    public:
-        EffectResourceContainer(const std::string& name, ID3DXEffect* effect, RenderSystem* renderSystem)
-            : Resource(name), mEffect(effect), mRenderSystem(renderSystem)
-        {}
+    /** Constructor */
+    explicit EffectManager(IDirect3DDevice9* D3DDevice);
 
-        ~EffectResourceContainer();
-
-        ID3DXEffect* getEffect() const
-        {
-            return mEffect;
-        }
-
-    private:
-        ID3DXEffect* mEffect;
-        RenderSystem* mRenderSystem;
-    };
-
-public:
-    explicit EffectManager(RenderSystem* renderSystem)
-        : mRenderSystem(renderSystem)
-    {}
+    /** Destructor */
+    ~EffectManager();
 
     /**
-     *	Create an effect from file.
-     *
-     *  @return
-     *  Returns NULL if failed.
+      	Initialize the effect manager.
+    @return
+        Returns true if succeeded, otherwise returns false.
      */
-    ID3DXEffect* createEffectFromFile(const std::string& resourceName, const std::string& srcFilename);
+    bool initialize();
 
     /**
-     *	Get the effect by resource name.
-     *
-     *  @return
-     *  Returns null if the resource is not exist.
+      	Create an effect from file.
+    @return
+        Returns the created effect. Returns nullptr if failed.
      */
-    ID3DXEffect* getEffect(const std::string& resourceName) const;
+    Effect* createEffectFromFile(const std::string& resourceName, const std::string& srcFilename);
+
+    /**
+      	Get the effect by resource name.
+    @return
+        Returns nullptr if the resource is not exist.
+     */
+    Effect* getEffect(const std::string& resourceName) const;
+
+    /** Handles the device lost event. */
+    void onDeviceLost();
+
+    /** Handles the device reset event. */
+    void onDeviceReset();
 
 private:
-    RenderSystem* mRenderSystem;
+    IDirect3DDevice9* mD3DDevice;
+    ID3DXEffectPool* mEffectPool;
 };
 
 }

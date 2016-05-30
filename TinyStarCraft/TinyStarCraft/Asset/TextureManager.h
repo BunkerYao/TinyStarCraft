@@ -1,77 +1,83 @@
 #pragma once
 
 #include "ResourceManager.h"
-#include "Rendering/Texture.h"
 #include "Utilities/Size2.h"
 
 namespace TinyStarCraft
 {
 
-class RenderSystem;
+class Texture;
 
 /**
- *	The texture manager is responsible for managing all texture resources
- *  in the life time of the program.
+ 	Manages all texture resources creation and destroy.
+@remarks
+    Textures created by this texture manager could be retrieved by a resource name.
+    Textures created as render targets will be recreated by the texture manager when device
+    is lost.
  */
 class TextureManager : public ResourceManager
 {
-private:
-
-    class TextureResourceContainer : public Resource
-    {
-    public:
-        explicit TextureResourceContainer(const std::string& name, Texture* texture, RenderSystem* renderSystem)
-            : Resource(name),
-              mTexture(texture),
-              mRenderSystem(renderSystem)
-        {}
-
-        ~TextureResourceContainer();
-
-        Texture* getTexture() const { return mTexture; }
-    private:
-        Texture* mTexture;
-        RenderSystem* mRenderSystem;
-    };
+public:
+    /**
+    	Resource name of the default texture
+    @remarks
+        Default texture is a empty texture created by the texture manager when initialize.
+     */
+    static constexpr char DEFAULT_TEXTURE_RESOURCE_NAME[12] = "__default__";
 
 public:
-    
-    explicit TextureManager(RenderSystem* renderSystem)
-        : mRenderSystem(renderSystem)
-    {}
+    /** Constructor */
+    explicit TextureManager(IDirect3DDevice9* D3DDevice);
+
+    /** Initialize the texture manager */
+    bool initialize();
 
     /**
-     *	Create a texture from file.
-     *
-     *  @param srcFilename
-     *  The file name of the image file to load.
-     *
-     *  @param size
-     *  Prefered texture size.
-     *
-     *  @param mipLevels
-     *  The number of mipmap levels.
-     *
-     *  @param format
-     *  Format of the texture.
-     *
-     *  @param isRenderTarget
-     *  Whether the texture could be used as a render target or not.
+      	Create an empty texture.
+    @param size
+        Size of the texture in pixels.
+    @param mipLevels
+        Number of Mipmap levels.
+    @param format
+        Format for the texture.
+    @param isRenderTarget
+        If the texture is created as a render texture.
+     */
+    Texture* createTexture(const std::string& resourceName, const Size2<UINT>& size = Size2<UINT>::ZERO(),
+        UINT mipLevels = D3DX_DEFAULT, D3DFORMAT format = D3DFMT_UNKNOWN, bool isRenderTarget = false);
+
+    /**
+      	Create an texture from image file.
+    @param size
+        Size of the texture in pixels. If set value to zero or D3DX_DEFAULT, the dimensions are taken
+        from the file and rounded up to a power of two. If the device supports non-power of 2 textures 
+        and D3DX_DEFAULT_NONPOW2 is specified, the size will not be rounded.
+    @param mipLevels
+        Number of Mipmap levels.
+    @param format
+        Format for the texture.
+    @param isRenderTarget
+        If the texture is created as a render texture.
      */
     Texture* createTextureFromFile(const std::string& resourceName, const std::string& fileName, 
         const Size2<UINT>& size = Size2<UINT>::ZERO(), UINT mipLevels = D3DX_DEFAULT, D3DFORMAT format = D3DFMT_UNKNOWN,
         bool isRenderTarget = false);
 
     /**
-     *	Get the Texture by resource name.
-     *
-     *  @return
-     *  Returns null if the resource is not exist.
+      	Retrieve the Texture with resource name.
+    @return
+        Returns nullptr if the resource is not exist.
      */
     Texture* getTexture(const std::string& name) const;
 
+    /** Unload all texture created with render target usage. */
+    void unloadRenderTargets();
+
+    /** Reload all textures created with render target usage. */
+    bool reloadRenderTargets();
+
 private:
-    RenderSystem* mRenderSystem;
+    IDirect3DDevice9* mD3DDevice;
 };
 
 }

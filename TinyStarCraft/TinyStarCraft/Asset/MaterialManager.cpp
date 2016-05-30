@@ -1,72 +1,57 @@
 #include "Precompiled.h"
 #include "MaterialManager.h"
 #include "EffectManager.h"
-#include "Rendering/Material.h"
+#include "Material.h"
 #include "Utilities/Logging.h"
 
 namespace TinyStarCraft
 {
 
-MaterialManager::MaterialManager(RenderSystem* renderSystem)
-    : mEffectManager(nullptr)
+MaterialManager::MaterialManager(EffectManager* effectManager)
+    : mEffectManager(effectManager)
 {
-    mEffectManager = new EffectManager(renderSystem);
-
-    // Create the terrain effect.
-    mEffectManager->createEffectFromFile("terrain", "./Resources/Effects/Terrain.hlsl");
-}
-
-MaterialManager::~MaterialManager()
-{
-    // Must destroy all materials before destroy effects.
-    destroyAllResources();
-
-    delete mEffectManager;
 }
 
 Material* MaterialManager::createMaterial(const std::string& resourceName, const std::string& effectName)
 {
     // Check whether the resource name is in use.
-    if (getResource(resourceName) != nullptr) {
-        TINYSC_LOGLINE_ERR("Material name \"%s\" is already in use.", resourceName.c_str());
+    if (getResource(resourceName) != nullptr) 
+    {
+        TINYSC_LOGLINE_ERR("Resource name \"%s\" is already in use.", resourceName.c_str());
         return nullptr;
     }
 
-    // Get the effect.
-    ID3DXEffect* effect = mEffectManager->getEffect(effectName);
-    if (effect == nullptr) {
+    // Retrieve the effect.
+    Effect* effect = mEffectManager->getEffect(effectName);
+    if (effect == nullptr) 
+    {
         TINYSC_LOGLINE_ERR("Effect \"%s\" is not exist.", effectName.c_str());
         return nullptr;
     }
 
     // Create the material.
-    // Use the material name's hash number as the material id.
+    // Use the material name's hash number as the material ID.
     std::hash<std::string> hashFunc;
-    Material* material = new Material(effect, (int)hashFunc(resourceName));
-    if (material == nullptr) {
-        return nullptr;
-    }
-
-    // Wrap the material and add to the resource manager.
-    MaterialResourceContainer* container = new MaterialResourceContainer(resourceName, material);
-    addResource(container);
+    Material* material = new Material(this, resourceName, hashFunc(resourceName), effect);
+    addResource(material);
 
     return material;
 }
 
 Material* MaterialManager::getMaterial(const std::string& resourceName) const
 {
-    MaterialResourceContainer* container = static_cast<MaterialResourceContainer*>(getResource(resourceName));
-
-    if (container != nullptr) 
-        return container->getMaterial();
-    else 
-        return nullptr;
+    return static_cast<Material*>(getResource(resourceName));
 }
 
-MaterialManager::MaterialResourceContainer::~MaterialResourceContainer()
+void MaterialManager::restoreMaterialTextures()
 {
-    delete mMaterial;
+    // Restore all material's textures.
+    std::vector<std::string> resourceNames = getResourceNames();
+    for (auto& it : resourceNames)
+    {
+        Material* material = getMaterial(it);
+        material->restoreTextures();
+    }
 }
 
 }

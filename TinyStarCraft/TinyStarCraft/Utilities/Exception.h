@@ -1,5 +1,8 @@
 #pragma once
 
+/** Maximum length of the exception message. */
+#define TINYSC_MAX_EXCEPTION_MESSAGE_LENGTH 512
+
 namespace TinyStarCraft
 {
 
@@ -17,10 +20,10 @@ public:
      */
     static void _throwf(const char* funcName, int line, const char* format, ...)
     {
-        char str[MAX_EXCEPTION_MESSAGE_LENGTH];
+        char str[TINYSC_MAX_EXCEPTION_MESSAGE_LENGTH];
         va_list args;
         va_start(args, format);
-        ::sprintf_s(str, MAX_EXCEPTION_MESSAGE_LENGTH, format, args);
+        ::sprintf_s(str, TINYSC_MAX_EXCEPTION_MESSAGE_LENGTH, format, args);
         va_end(args);
 
         throw Exception(str, funcName, line);
@@ -51,6 +54,6 @@ private:
 };
 
 // Throw out an exception with formatted message
-#define TINYSC_THROWF(message, ...) Exception::throwf(__FUNCTION__, __LINE__, message, __VA_ARGS__)
+#define TINYSC_THROWF(message, ...) Exception::_throwf(__FUNCTION__, __LINE__, message, __VA_ARGS__)
 
 };

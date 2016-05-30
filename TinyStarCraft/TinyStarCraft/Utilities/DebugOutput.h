@@ -6,7 +6,7 @@ namespace TinyStarCraft
 {
 
 /**
- *	Print a formatted message on output window
+  	Print a formatted message on output window
  */
 inline void OutputDebugStringF(const char* format, ...)
 {

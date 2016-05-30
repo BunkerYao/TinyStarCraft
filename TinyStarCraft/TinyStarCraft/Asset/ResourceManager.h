@@ -6,85 +6,62 @@ namespace TinyStarCraft
 class Resource;
 
 /**
- *	Base class for specific type resource manages like spritesheet manager
- *  and audio manager.
- *  
- *  @remarks
- *  Each resource in a resource manager has an unique name and one resource
- *  can be retrieved by that name. 
+    Manages resource creation and destroy.
+@remarks
+    Base class for specific type resource managers like texture manager, material manager, .etc.
+    Each resource in a resource manager has an unique name and a resource can be retrieved by that name. 
  */
 class ResourceManager
 {
 public:
     /**
-     *	Destructor
-     *  Will destroy all resources.
+     	Destructor
+    @remarks
+        Destroys all resources.
      */
     virtual ~ResourceManager();
 
     /**
-     *	Get a resource by name.
-     *  
-     *  @return
-     *  Returns the resource with the given name. Returns null if the resource is not exist.
+        Retrieve a resource by its name.
+    @return
+        Returns the resource with the given name. Returns nullptr if the resource is not exist.
      */
     Resource* getResource(const std::string& name) const;
 
     /**
-     *	Add a resource
-     *
-     *  @param name
-     *  A unique resource name.
-     *
-     *  @return
-     *  Returns true if the resource is added to the resource manager. Returns
-     *  false if there is a name collision and the resource is not added.
+     	Add a resource
+    @param resource
+        A resource with a unique resource name.
+    @return
+        The given resource name must be unique.
      */
-    bool addResource(Resource* resource);
+    void addResource(Resource* resource);
 
     /**
-     *	Destroy a resource in resource manager.
-     *
-     *  @remarks
-     *  Do nothing if resource is not exist.
+      	Destroys a resource with the given name.
+    @remarks
+        The resource with the given name must be exist.
      */
     void destroyResource(const std::string& name);
 
     /**
-     *	Destroy all resources.
-     */
+        Destroys a resource with the given name.
+    @remarks
+        The given resource must be owned by this resource manager.
+    */
+    void destroyResource(Resource* resource);
+
+    /**	Destroy all resources. */
     void destroyAllResources();
 
-    /**
-     *	Get the number of added resources.
-     */
-    size_t getResourcesCount() const
-    {
-        return mResources.size();
-    }
+    /** Get all resource names. */
+    std::vector<std::string> getResourceNames() const;
+
+    /**	Get the number of resources. */
+    size_t getResourcesCount() const { return mResources.size(); }
 
 private:
     std::unordered_map<std::string, Resource*> mResources;
-};
-
-
-/**
- *	Base resource class with a unique name. 
- *  Managed by resource manager.
- */
-class Resource
-{
-public:
-    explicit Resource(const std::string& name)
-        : mName(name)
-    {}
-
-    virtual ~Resource() {}
-
-    const std::string& getName() const { return mName; }
-
-private:
-    std::string mName;
 };
 
 };

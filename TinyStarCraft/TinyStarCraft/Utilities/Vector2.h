@@ -72,7 +72,7 @@ public:
 
 public:
     /**
-     *	Obtain a vector which has all component set to zero.
+      	Obtain a vector which has all component set to zero.
      */
     static const Vector2<T>& ZERO()
     {
@@ -81,7 +81,7 @@ public:
     }
 
     /**
-     *	Obtain a vector which has all component set to one.
+      	Obtain a vector which has all component set to one.
      */
     static const Vector2<T>& ONE()
     {

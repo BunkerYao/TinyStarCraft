@@ -57,7 +57,7 @@ private:
 
 
 /**
- *	Isometric camera class
+  	Isometric camera 
  */
 class Camera
 {
@@ -105,9 +105,12 @@ private:
 private:
     Size2f mViewportSize;
     D3DXVECTOR3 mPosition;
+
     D3DXMATRIX mViewMatrix;
     D3DXMATRIX mProjMatrix;
+
     ViewFrustum mViewFrustum;
+
     bool mViewMatrixNeedsUpdate;
     bool mProjMatrixNeedsUpdate;
     bool mViewFrustumNeedsUpdate;

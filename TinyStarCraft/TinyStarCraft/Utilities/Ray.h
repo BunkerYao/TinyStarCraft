@@ -42,12 +42,12 @@ public:
     }
 
     /**
-     *	Test if this ray has intersection with an AABB.
+      	Test if this ray has intersection with an AABB.
      */
     bool intersectAABB(const AABB& aabb) const;
 
     /**
-     *	Test if this ray has intersection with an AABB and return the intersection positions.
+      	Test if this ray has intersection with an AABB and return the intersection positions.
      */
     bool intersectAABB(const AABB& aabb, float t[2]) const;
 

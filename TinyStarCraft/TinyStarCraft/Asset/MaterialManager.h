@@ -7,57 +7,35 @@ namespace TinyStarCraft
 
 class EffectManager;
 class Material;
-class RenderSystem;
 
-class MaterialManager : public ResourceManager
+class MaterialManager : private ResourceManager
 {
 public:
-    class MaterialResourceContainer : public Resource
-    {
-    public:
-        MaterialResourceContainer(const std::string& name, Material* material)
-            : Resource(name),
-              mMaterial(material)
-        {}
-
-        ~MaterialResourceContainer();
-
-        Material* getMaterial() const
-        {
-            return mMaterial;
-        }
-
-    private:
-        Material* mMaterial;
-    };
-
-public:
-    explicit MaterialManager(RenderSystem* renderSystem);
-
-    ~MaterialManager();
+    /** Constructor */
+    explicit MaterialManager(EffectManager* effectManager);
 
     /**
-     *	Create a material from effect.
-     *
-     *  @param resourceName
-     *  The material's name.
-     *
-     *  @param effectName
-     *  Name of the effect resource the material uses.
-     *
-     *  @return
-     *  Returns nullptr if error happens.
+     	Create a material from effect.
+    @param resourceName
+        A unique material resource name.
+    @param effectName
+        Resource name of the effect the material uses.
+    @return
+        Returns nullptr if effect is not exist or resource name is in use.
      */
     Material* createMaterial(const std::string& resourceName, const std::string& effectName);
 
     /**
-     *	Get material by resource name.
-     *  
-     *  @return
-     *  Returns null if the resource is not exist.
+      	Retrieve a material by its resource name.
+    @return
+        Returns nullptr if the material with given resource name is not exist.
      */
     Material* getMaterial(const std::string& resourceName) const;
 
+    /** 
+        Restore each material's texture.
+     */
+    void restoreMaterialTextures();
 
 private:
     EffectManager* mEffectManager;

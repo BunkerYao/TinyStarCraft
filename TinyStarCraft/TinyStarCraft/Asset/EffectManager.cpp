@@ -1,44 +1,93 @@
 #include "Precompiled.h"
 #include "EffectManager.h"
+#include "Effect.h"
 #include "Rendering/RenderSystem.h"
+#include "Utilities/Assert.h"
+#include "Utilities/DebugOutput.h"
 #include "Utilities/Logging.h"
 
 namespace TinyStarCraft
 {
 
-EffectManager::EffectResourceContainer::~EffectResourceContainer()
+EffectManager::EffectManager(IDirect3DDevice9* D3DDevice) 
+    : mD3DDevice(D3DDevice), mEffectPool(nullptr)
 {
-    mRenderSystem->destroyEffect(mEffect);
 }
 
-ID3DXEffect* EffectManager::createEffectFromFile(const std::string& resourceName, const std::string& srcFilename)
+EffectManager::~EffectManager()
 {
-    // Check whether the resource name is in use.
-    if (getResource(resourceName) != nullptr) {
-        TINYSC_LOGLINE_ERR("Effect name \"%s\" is already in use.", srcFilename.c_str());
-        return NULL;
+    destroyAllResources();
+
+    ULONG number = mEffectPool->Release();
+    TINYSC_ASSERT(number == 0, "Effect pool is not released successfully.");
+}
+
+bool EffectManager::initialize()
+{
+    HRESULT hr = ::D3DXCreateEffectPool(&mEffectPool);
+    if (FAILED(hr)) 
+    {
+        TINYSC_LOGLINE_ERR("D3DXCreateEffectPool failed 0x%08x %s.", hr, ::DXGetErrorString(hr));
+        return false;
+    }
+    return true;
+}
+
+Effect* EffectManager::createEffectFromFile(const std::string& resourceName, const std::string& srcFilename)
+{
+    // Check if the resource name is in use.
+    if (getResource(resourceName) != nullptr) 
+    {
+        TINYSC_LOGLINE_ERR("Resource name \"%s\" is already in use.", resourceName.c_str());
+        return nullptr;
     }
 
-    // Create the effect
-    ID3DXEffect* effect = mRenderSystem->createEffectFromFile(srcFilename, 0);
-    if (!effect) 
-        return NULL;
+    ID3DXBuffer* compilationError = nullptr;
+    Effect* effect = new Effect(this, resourceName);
+    bool result = effect->createFromFile(mD3DDevice, srcFilename, 0, mEffectPool, &compilationError);
 
-    // Wrap the effect and add to the manager.
-    EffectResourceContainer* container = new EffectResourceContainer(resourceName, effect, mRenderSystem);
-    addResource(container);
+    if (compilationError) 
+    {
+        // Output compilation messages to the output window.
+        OutputDebugStringF((char*)compilationError->GetBufferPointer());
+        compilationError->Release();
+    }
+
+    if (!result) 
+    {
+        TINYSC_LOGLINE_ERR("Failed to create effect from file.");
+        delete effect;
+        return nullptr;
+    }
+
+    addResource(effect);
 
     return effect;
 }
 
-ID3DXEffect* EffectManager::getEffect(const std::string& resourceName) const
+Effect* EffectManager::getEffect(const std::string& resourceName) const
 {
-    EffectResourceContainer* container = static_cast<EffectResourceContainer*>(getResource(resourceName));
+    return static_cast<Effect*>(getResource(resourceName));
+}
 
-    if (container) 
-        return container->getEffect();
-    else 
-        return NULL;
+void EffectManager::onDeviceLost()
+{
+    std::vector<std::string> resourceNames = getResourceNames();
+    for (auto& it : resourceNames) 
+    {
+        Effect* effect = getEffect(it);
+        effect->getPointer()->OnLostDevice();
+    }
+}
+
+void EffectManager::onDeviceReset()
+{
+    std::vector<std::string> resourceNames = getResourceNames();
+    for (auto& it : resourceNames) 
+    {
+        Effect* effect = getEffect(it);
+        effect->getPointer()->OnResetDevice();
+    }
 }
 
 }

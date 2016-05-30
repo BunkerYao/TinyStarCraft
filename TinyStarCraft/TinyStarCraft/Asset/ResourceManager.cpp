@@ -1,5 +1,7 @@
 #include "Precompiled.h"
 #include "ResourceManager.h"
+#include "Resource.h"
+#include "Utilities/Assert.h"
 
 namespace TinyStarCraft
 {
@@ -18,34 +20,51 @@ Resource* ResourceManager::getResource(const std::string& name) const
         return it->second;
 }
 
-bool ResourceManager::addResource(Resource* resource)
+void ResourceManager::addResource(Resource* resource)
 {
-    if (mResources.count(resource->getName()) == 1) 
-        return false;
-
+    // Check if resource name is unique.
+    TINYSC_ASSERT(mResources.count(resource->getName()) == 0, "Resource name is not unique.");
     mResources.insert(std::make_pair(resource->getName(), resource));
-
-    return true;
 }
 
 void ResourceManager::destroyResource(const std::string& name)
 {
     auto& it = mResources.find(name);
-    if (it != mResources.end()) {
+    if (it != mResources.end()) 
+    {
+        // Delete the resource through its pointer and remove the entry
+        // from resource map.
         delete it->second;
         mResources.erase(it);
     }
 }
 
+void ResourceManager::destroyResource(Resource* resource)
+{
+    TINYSC_ASSERT(this == resource->getOwner(), "This resource manager doesn't own this resource.");
+    destroyResource(resource->getName());
+}
+
 void ResourceManager::destroyAllResources()
 {
-    if (!mResources.empty()) {
-        for (auto& it : mResources) {
+    if (!mResources.empty()) 
+    {
+        for (auto& it : mResources) 
+        {
             delete it.second;
         }
-
         mResources.clear();
     }
 }
+
+std::vector<std::string> ResourceManager::getResourceNames() const
+{
+    // Gather all resource names to an array.
+    std::vector<std::string> resourceNames;
+    for (auto& it : mResources)
+        resourceNames.push_back(it.first);
+
+    return resourceNames;
+}   
 
 }

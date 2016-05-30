@@ -21,5 +21,5 @@
 #include <d3dx9.h>
 #include <DxErr.h>
 
-/** Maximum length of the exception message. */
-#define MAX_EXCEPTION_MESSAGE_LENGTH 512
+
+

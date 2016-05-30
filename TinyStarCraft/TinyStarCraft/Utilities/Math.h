@@ -17,9 +17,9 @@ public:
 
 public:
     /**
-     *	Deleted constructor
-     *  @remarks
-     *  For static usage only.
+      	Deleted constructor
+    @remarks
+        For static usage only.
      */
     Math() = delete;
 
@@ -63,7 +63,7 @@ public:
     }
 
     /**
-     *	Linear interpolation
+      	Linear interpolation
      */
     float lerp(float from, float to, float t)
     {

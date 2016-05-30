@@ -1,6 +1,5 @@
 #include "Precompiled.h"
 #include "GameWindow.h"
-#include "Utilities/Exceptions.h"
 
 namespace TinyStarCraft
 {

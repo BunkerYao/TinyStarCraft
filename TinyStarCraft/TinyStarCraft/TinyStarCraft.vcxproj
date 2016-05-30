@@ -96,6 +96,9 @@
       <AdditionalDependencies>d3d9.lib;dxerr.lib;legacy_stdio_definitions.lib;d3dx9d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)Lib\$(PlatformTarget)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)$(Configuration)\*.cso" "$(ProjectDir)Resources\Effects\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -112,6 +115,9 @@
       <AdditionalDependencies>d3d9.lib;dxerr.lib;legacy_stdio_definitions.lib;d3dx9d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)Lib\$(PlatformTarget)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)$(Configuration)\*.cso" "$(ProjectDir)Resources\Effects\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -132,6 +138,9 @@
       <AdditionalDependencies>d3d9.lib;dxerr.lib;legacy_stdio_definitions.lib;d3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)Lib\$(PlatformTarget)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)$(Configuration)\*.cso" "$(ProjectDir)Resources\Effects\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -152,24 +161,34 @@
       <AdditionalDependencies>d3d9.lib;dxerr.lib;legacy_stdio_definitions.lib;d3dx9.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(DXSDK_DIR)Lib\$(PlatformTarget)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy "$(SolutionDir)$(Configuration)\*.cso" "$(ProjectDir)Resources\Effects\"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Asset\Effect.h" />
+    <ClInclude Include="Asset\Resource.h" />
     <ClInclude Include="Asset\ResourceManager.h" />
     <ClInclude Include="Asset\EffectManager.h" />
     <ClInclude Include="Asset\MaterialManager.h" />
+    <ClInclude Include="Asset\Mesh.h" />
+    <ClInclude Include="Rendering\IsometricSprite.h" />
     <ClInclude Include="Rendering\Camera.h" />
     <ClInclude Include="Precompiled.h" />
-    <ClInclude Include="Terrain\TerrainBuilder.h" />
+    <ClInclude Include="Rendering\IsometricSpriteRenderer.h" />
+    <ClInclude Include="Rendering\Scene.h" />
+    <ClInclude Include="Rendering\TerrainModifier.h" />
+    <ClInclude Include="Utilities\Region.h" />
+    <ClInclude Include="Windows\Time.h" />
     <ClInclude Include="Utilities\DebugOutput.h" />
-    <ClInclude Include="Rendering\Material.h" />
-    <ClInclude Include="Rendering\Texture.h" />
+    <ClInclude Include="Asset\Material.h" />
+    <ClInclude Include="Asset\Texture.h" />
     <ClInclude Include="Rendering\RenderSystem.h" />
     <ClInclude Include="Asset\TextureManager.h" />
-    <ClInclude Include="Terrain\TerrainMaterial.h" />
-    <ClInclude Include="Terrain\Terrain.h" />
+    <ClInclude Include="Rendering\Terrain.h" />
     <ClInclude Include="Utilities\AABB.h" />
     <ClInclude Include="Utilities\Assert.h" />
-    <ClInclude Include="Utilities\Exceptions.h" />
+    <ClInclude Include="Utilities\Exception.h" />
     <ClInclude Include="Utilities\Logging.h" />
     <ClInclude Include="Utilities\Math.h" />
     <ClInclude Include="Utilities\Point2.h" />
@@ -180,9 +199,13 @@
     <ClInclude Include="Windows\GameWindow.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Asset\Effect.cpp" />
+    <ClCompile Include="Asset\Material.cpp" />
     <ClCompile Include="Asset\ResourceManager.cpp" />
     <ClCompile Include="Asset\EffectManager.cpp" />
     <ClCompile Include="Asset\MaterialManager.cpp" />
+    <ClCompile Include="Asset\Texture.cpp" />
+    <ClCompile Include="Asset\Mesh.cpp" />
     <ClCompile Include="Rendering\Camera.cpp" />
     <ClCompile Include="Precompiled.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -192,22 +215,83 @@
     </ClCompile>
     <ClCompile Include="Rendering\RenderSystem.cpp" />
     <ClCompile Include="Asset\TextureManager.cpp" />
-    <ClCompile Include="Terrain\TerrainBuilder.cpp" />
-    <ClCompile Include="Terrain\Terrain.cpp" />
-    <ClCompile Include="Terrain\TerrainMaterial.cpp" />
+    <ClCompile Include="Rendering\IsometricSprite.cpp" />
+    <ClCompile Include="Rendering\IsometricSpriteRenderer.cpp" />
+    <ClCompile Include="Rendering\Scene.cpp" />
+    <ClCompile Include="Rendering\TerrainModifier.cpp" />
+    <ClCompile Include="Rendering\Terrain.cpp" />
+    <ClCompile Include="Utilities\Region.cpp" />
+    <ClCompile Include="Windows\Time.cpp" />
     <ClCompile Include="Utilities\Logging.cpp" />
     <ClCompile Include="Utilities\Ray.cpp" />
     <ClCompile Include="Windows\GameWindow.cpp" />
     <ClCompile Include="Windows\Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Resources\Effects\Terrain.hlsl">
-      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+    <FxCompile Include="Resources\Effects\Src\Internal\DefaultIsometricSprite.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Resources\Effects\Src\Internal\SharedParameters.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Effect</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">2.0</ShaderModel>
+    </FxCompile>
+    <FxCompile Include="Resources\Effects\Src\Internal\Terrain.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Effect</ShaderType>
       <FileType>Document</FileType>
-    </None>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">2.0</ShaderModel>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </AdditionalIncludeDirectories>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Effects\Src\Internal\IsometricSprite.hlsli" />
+    <None Include="Resources\Effects\Src\Internal\Common.hlsli" />
+    <FxCompile Include="Resources\Effects\Src\Internal\Water.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Effect</ShaderType>
+      <FileType>Document</FileType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">2.0</ShaderModel>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="Resources\Effects\Src\Internal\DeferredLighting.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Effect</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Effect</ShaderType>
+      <FileType>Document</FileType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">2.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">2.0</ShaderModel>
+    </FxCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

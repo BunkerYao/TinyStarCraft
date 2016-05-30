@@ -100,7 +100,7 @@ public:
     void setBottom(const T& val) { mMax.y = val; }
 
     /**
-     *	Get the center point of this rectangle.
+      	Get the center point of this rectangle.
      */
     Point2<T> getCenter() const
     {
@@ -108,7 +108,7 @@ public:
     }
 
     /**
-     *	Check if the given point is inside the rectangle.
+      	Check if the given point is inside the rectangle.
      */
     bool isPointInside(const Point2<T>& point) const
     {
@@ -116,7 +116,7 @@ public:
     }
 
     /**
-     *	Clamp a point in the area made by this rectangle.
+      	Clamp a point in the area made by this rectangle.
      */
     Point2<T> clamp(const Point2<T>& point) const
     {

@@ -131,6 +131,8 @@ void Camera::_updateViewFrustum()
     ::D3DXVec4Normalize(&vecNormal, &vecNormal);
     ::D3DXPlaneFromPointNormal(&plane, (D3DXVECTOR3*)&viewPlaneVertices[2], (D3DXVECTOR3*)&vecNormal);
     mViewFrustum.setPlane(3, plane);
+
+    mViewFrustumNeedsUpdate = false;
 }
 
 ViewFrustum::ViewFrustum(const D3DXPLANE planes[4])
@@ -148,33 +150,40 @@ int ViewFrustum::hasIntersection(const AABB& aabb) const
 
     // Calculate min & max points for each face and check their position.
     D3DXVECTOR4 max(0.0f, 0.0f, 0.0f, 1.0f), min(0.0f, 0.0f, 0.0f, 1.0f);
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; ++i) 
+    {
         // X-Axis
-        if (mPlanes[i].a > 0.0f) {
+        if (mPlanes[i].a > 0.0f) 
+        {
             max.x = aabbMax.x;
             min.x = aabbMin.x;
         }
-        else {
+        else
+        {
             max.x = aabbMin.x;
             min.x = aabbMax.x;
         }
 
         // Y-Axis
-        if (mPlanes[i].b > 0.0f) {
+        if (mPlanes[i].b > 0.0f) 
+        {
             max.y = aabbMax.y;
             min.y = aabbMin.y;
         }
-        else {
+        else 
+        {
             max.y = aabbMin.y;
             min.y = aabbMax.y;
         }
 
         // Z-Axis
-        if (mPlanes[i].c > 0.0f) {
+        if (mPlanes[i].c > 0.0f) 
+        {
             max.z = aabbMax.z;
             min.z = aabbMin.z;
         }
-        else {
+        else 
+        {
             max.z = aabbMin.z;
             min.z = aabbMax.z;
         }
